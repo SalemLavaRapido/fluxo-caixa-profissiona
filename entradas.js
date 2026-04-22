@@ -53,6 +53,13 @@ class EntradasSystem {
 
             // Adicionar user_id
             entrada.user_id = authSystem.getCurrentUserId();
+            
+            // Ajustar data para evitar problema de timezone
+            if (entrada.data) {
+                // Garantir formato YYYY-MM-DD sem timezone
+                const [ano, mes, dia] = entrada.data.split('-');
+                entrada.data = `${ano}-${mes}-${dia}`;
+            }
 
             let result;
             if (this.editingId) {
@@ -228,8 +235,9 @@ class EntradasSystem {
 
     // Formatar data
     formatarData(dataString) {
-        const data = new Date(dataString);
-        return data.toLocaleDateString('pt-BR');
+        // Tratar data como string local para evitar timezone issues
+        const [ano, mes, dia] = dataString.split('-');
+        return `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
     }
 
     // Formatar dinheiro
@@ -262,8 +270,9 @@ function openModalEntrada() {
     document.getElementById('formEntrada').reset();
     document.getElementById('entradaId').value = '';
     
-    // Definir data atual
-    const hoje = new Date().toISOString().split('T')[0];
+    // Definir data atual (sem timezone)
+    const agora = new Date();
+    const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
     document.getElementById('entradaData').value = hoje;
     
     // Limpar edição
