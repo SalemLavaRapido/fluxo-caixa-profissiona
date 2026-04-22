@@ -145,6 +145,7 @@ class EntradasSystem {
         document.getElementById('entradaData').value = entrada.data;
         document.getElementById('entradaDescricao').value = entrada.descricao;
         document.getElementById('entradaCategoria').value = entrada.categoria;
+        document.getElementById('entradaFormaPagamento').value = entrada.forma_pagamento;
         document.getElementById('entradaValor').value = entrada.valor;
 
         // Abrir modal
@@ -174,6 +175,7 @@ class EntradasSystem {
                 <td>${this.formatarData(entrada.data)}</td>
                 <td>${entrada.descricao}</td>
                 <td><span class="badge bg-success">${this.formatarCategoria(entrada.categoria)}</span></td>
+                <td><span class="badge bg-info">${this.formatarFormaPagamento(entrada.forma_pagamento)}</span></td>
                 <td class="text-success fw-bold">+${this.formatarDinheiro(entrada.valor)}</td>
                 <td>
                     <button class="btn btn-sm btn-action btn-edit" onclick="entradasSystem.editarEntrada('${entrada.id}')">
@@ -248,6 +250,17 @@ class EntradasSystem {
         }).format(parseFloat(valor));
     }
 
+    // Formatar forma de pagamento
+    formatarFormaPagamento(forma) {
+        const formas = {
+            'dinheiro': 'Dinheiro',
+            'debito': 'Débito',
+            'credito': 'Crédito',
+            'pix': 'Pix'
+        };
+        return formas[forma] || forma;
+    }
+
     // Formatar categoria
     formatarCategoria(categoria) {
         const categorias = {
@@ -288,11 +301,12 @@ function salvarEntrada() {
         data: document.getElementById('entradaData').value,
         descricao: document.getElementById('entradaDescricao').value,
         categoria: document.getElementById('entradaCategoria').value,
+        forma_pagamento: document.getElementById('entradaFormaPagamento').value,
         valor: parseFloat(document.getElementById('entradaValor').value)
     };
 
     // Validação
-    if (!entrada.data || !entrada.descricao || !entrada.categoria || !entrada.valor) {
+    if (!entrada.data || !entrada.descricao || !entrada.categoria || !entrada.forma_pagamento || !entrada.valor) {
         authSystem.showAlert('Preencha todos os campos!', 'warning');
         return;
     }

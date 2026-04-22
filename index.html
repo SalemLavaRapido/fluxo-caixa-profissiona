@@ -561,13 +561,14 @@
                                         <th>Data</th>
                                         <th>Descrição</th>
                                         <th>Categoria</th>
+                                        <th>Forma Pagamento</th>
                                         <th>Valor</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelaEntradas">
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">
+                                        <td colspan="6" class="text-center text-muted">
                                             <i class="fas fa-inbox fa-2x mb-2"></i>
                                             <p>Nenhuma entrada encontrada</p>
                                         </td>
@@ -685,6 +686,16 @@
                         <div class="form-floating mb-3">
                             <input type="number" class="form-control form-control-custom" id="entradaValor" step="0.01" min="0" placeholder="0,00" required>
                             <label for="entradaValor">Valor (R$)</label>
+                        </div>
+                        <div class="form-floating mb-3">
+                            <select class="form-control form-control-custom" id="entradaFormaPagamento" required>
+                                <option value="">Selecione...</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="debito">Cartão de Débito</option>
+                                <option value="credito">Cartão de Crédito</option>
+                                <option value="pix">Pix</option>
+                            </select>
+                            <label for="entradaFormaPagamento">Forma de Pagamento</label>
                         </div>
                     </form>
                 </div>
