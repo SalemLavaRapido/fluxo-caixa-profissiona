@@ -2,7 +2,7 @@
 const SUPABASE_CONFIG = {
     // Credenciais do projeto Supabase
     URL: 'https://emkiewosmlnyjnpujbui.supabase.co',
-    ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNldW5vbmUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTY3ODkwMTIzNCwiZXhwIjoxOTk0MjY1MjM0fQ.sb_publishable_Bd982ryXG_esL01jPijc_A_2u3pY8vV'
+    ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lld29zbWxueWpucHVqYnVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMxOTIsImV4cCI6MjA5MjM3OTE5Mn0.ohXoyqFJfyJxlyS1Efpykr0l0zezC2MZjVJWf55NV0c'
 };
 
 // Inicialização do cliente Supabase
