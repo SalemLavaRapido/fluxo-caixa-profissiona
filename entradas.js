@@ -286,6 +286,8 @@ function openModalEntrada() {
 }
 
 function salvarEntrada() {
+    console.log('Iniciando salvamento...');
+    
     const entrada = {
         data: document.getElementById('entradaData').value,
         descricao: document.getElementById('entradaDescricao').value,
@@ -294,8 +296,11 @@ function salvarEntrada() {
         valor: parseFloat(document.getElementById('entradaValor').value)
     };
 
+    console.log('Dados da entrada:', entrada);
+
     // Validação
     if (!entrada.data || !entrada.descricao || !entrada.categoria || !entrada.forma_pagamento || !entrada.valor) {
+        console.log('Validação falhou:', entrada);
         authSystem.showAlert('Preencha todos os campos!', 'warning');
         return;
     }
