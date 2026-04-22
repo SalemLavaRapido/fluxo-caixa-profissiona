@@ -201,20 +201,7 @@ class EntradasSystem {
         ];
     }
 
-    // Preencher select de categorias
-    preencherCategorias() {
-        const select = document.getElementById('entradaCategoria');
-        if (!select) return;
-
-        const categorias = this.getCategorias();
-        categorias.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.value;
-            option.textContent = cat.label;
-            select.appendChild(option);
-        });
-    }
-
+    
     // Preencher select de filtros
     preencherFiltros() {
         const select = document.getElementById('filtroCategoria');
