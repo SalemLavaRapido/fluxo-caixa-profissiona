@@ -192,11 +192,12 @@ class EntradasSystem {
     // Obter categorias
     getCategorias() {
         return [
-            { value: 'vendas', label: 'Vendas' },
-            { value: 'servicos', label: 'Serviços' },
-            { value: 'aluguel', label: 'Aluguel' },
-            { value: 'investimentos', label: 'Investimentos' },
-            { value: 'outras', label: 'Outras' }
+            { value: 'lavagem_carro', label: 'Lavagem Carro' },
+            { value: 'lavagem_moto', label: 'Lavagem Moto' },
+            { value: 'lavagem_caminhonete', label: 'Lavagem Caminhonete' },
+            { value: 'mensalista', label: 'Estacionamento Mensalista' },
+            { value: 'avulso', label: 'Estacionamento Avulso' },
+            { value: 'outros', label: 'Outros' }
         ];
     }
 
@@ -264,11 +265,12 @@ class EntradasSystem {
     // Formatar categoria
     formatarCategoria(categoria) {
         const categorias = {
-            'vendas': 'Vendas',
-            'servicos': 'Serviços',
-            'aluguel': 'Aluguel',
-            'investimentos': 'Investimentos',
-            'outras': 'Outras'
+            'lavagem_carro': 'Lavagem Carro',
+            'lavagem_moto': 'Lavagem Moto',
+            'lavagem_caminhonete': 'Lavagem Caminhonete',
+            'mensalista': 'Estacionamento Mensalista',
+            'avulso': 'Estacionamento Avulso',
+            'outros': 'Outros'
         };
         return categorias[categoria] || categoria;
     }
