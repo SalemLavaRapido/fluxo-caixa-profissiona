@@ -768,5 +768,18 @@
     <script src="js/dashboard.js"></script>
     <script src="js/relatorios.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- Funções de UI -->
+    <script>
+        function showRegisterForm() {
+            document.getElementById('loginContainer').classList.add('hidden');
+            document.getElementById('registerContainer').classList.remove('hidden');
+        }
+        
+        function showLoginForm() {
+            document.getElementById('registerContainer').classList.add('hidden');
+            document.getElementById('loginContainer').classList.remove('hidden');
+        }
+    </script>
 </body>
 </html>
