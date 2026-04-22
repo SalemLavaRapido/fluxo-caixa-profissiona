@@ -22,6 +22,11 @@ class AuthSystem {
                 return false;
             }
 
+            // Debug: verificar se supabase está inicializado
+            console.log('Supabase client:', supabase);
+            console.log('Email:', email);
+            console.log('Password:', password ? '***' : 'empty');
+
             this.showLoading(true);
 
             const { data, error } = await supabase.auth.signInWithPassword({
