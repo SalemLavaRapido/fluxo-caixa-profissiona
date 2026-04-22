@@ -702,7 +702,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success" onclick="salvarEntrada()">
+                    <button type="button" class="btn btn-success" onclick="salvarEntradaSimples()">
                         <i class="fas fa-save me-2"></i>Salvar
                     </button>
                 </div>
@@ -808,6 +808,38 @@
     <script src="dashboard.js"></script>
     <script src="relatorios.js"></script>
     <script src="app.js"></script>
+    
+    <!-- Função salvar simples -->
+    <script>
+    function salvarEntradaSimples() {
+        try {
+            const entrada = {
+                data: document.getElementById('entradaData').value,
+                descricao: document.getElementById('entradaDescricao').value,
+                categoria: document.getElementById('entradaCategoria').value,
+                forma_pagamento: document.getElementById('entradaFormaPagamento').value,
+                valor: parseFloat(document.getElementById('entradaValor').value),
+                user_id: authSystem.getCurrentUserId()
+            };
+            
+            if (!entrada.data || !entrada.descricao || !entrada.categoria || !entrada.forma_pagamento || !entrada.valor) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            
+            supabase.from('entradas').insert([entrada]).then(result => {
+                if (result.error) {
+                    alert('Erro: ' + result.error.message);
+                } else {
+                    alert('Salvo com sucesso!');
+                    location.reload();
+                }
+            });
+        } catch (error) {
+            alert('Erro: ' + error.message);
+        }
+    }
+    </script>
     
     <!-- Funções de UI -->
     <script>
