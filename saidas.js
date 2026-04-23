@@ -185,7 +185,22 @@ class SaidasSystem {
     // Obter categorias
     getCategorias() {
         return [
+            { value: 'luz', label: 'Luz' },
+            { value: 'agua', label: 'Água' },
             { value: 'aluguel', label: 'Aluguel' },
+            { value: 'internet', label: 'Internet' },
+            { value: 'funcionario', label: 'Funcionário' },
+            { value: 'produtos', label: 'Produtos' },
+            { value: 'vigilante', label: 'Vigilante' },
+            { value: 'mei', label: 'MEI' },
+            { value: 'prefeitura', label: 'Prefeitura' },
+            { value: 'outros', label: 'Outros' }
+        ];
+    }
+
+    // Obter categorias antigas (para compatibilidade)
+    getCategoriasAntigas() {
+        return [
             { value: 'funcionarios', label: 'Funcionários' },
             { value: 'fornecedores', label: 'Fornecedores' },
             { value: 'impostos', label: 'Impostos' },
@@ -262,7 +277,17 @@ class SaidasSystem {
     // Formatar categoria
     formatarCategoria(categoria) {
         const categorias = {
+            'luz': 'Luz',
+            'agua': 'Água',
             'aluguel': 'Aluguel',
+            'internet': 'Internet',
+            'funcionario': 'Funcionário',
+            'produtos': 'Produtos',
+            'vigilante': 'Vigilante',
+            'mei': 'MEI',
+            'prefeitura': 'Prefeitura',
+            'outros': 'Outros',
+            // Categorias antigas (compatibilidade)
             'funcionarios': 'Funcionários',
             'fornecedores': 'Fornecedores',
             'impostos': 'Impostos',
