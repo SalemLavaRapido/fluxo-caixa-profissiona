@@ -684,13 +684,7 @@
                                     <option value="mensalista">Estacionamento Mensalista</option>
                                     <option value="avulso">Estacionamento Avulso</option>
                                 </optgroup>
-                                <optgroup label="Outras">
-                                    <option value="outros">Outros</option>
-                                    <option value="vendas">Vendas</option>
-                                    <option value="servicos">Serviços</option>
-                                    <option value="aluguel">Aluguel</option>
-                                    <option value="investimentos">Investimentos</option>
-                                </optgroup>
+                                <option value="outros">Outros</option>
                             </select>
                             <label for="entradaCategoria">Categoria</label>
                         </div>
@@ -712,7 +706,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-success" onclick="testarSalvar()">
+                    <button type="button" class="btn btn-success" onclick="salvarFinal()">
                         <i class="fas fa-save me-2"></i>Salvar
                     </button>
                 </div>
@@ -819,54 +813,60 @@
     <script src="relatorios.js"></script>
     <script src="app.js"></script>
     
-    <!-- Função de teste -->
+    <!-- Função salvar FINAL -->
     <script>
-    function testarSalvar() {
-        alert('Botão clicado! Função testarSalvar foi chamada.');
-        
-        // Verificar se os campos existem
-        const campos = ['entradaData', 'entradaDescricao', 'entradaCategoria', 'entradaFormaPagamento', 'entradaValor'];
-        let todosExistem = true;
-        let valores = {};
-        
-        campos.forEach(campo => {
-            const elemento = document.getElementById(campo);
-            if (!elemento) {
-                alert('Campo não encontrado: ' + campo);
-                todosExistem = false;
-            } else {
-                valores[campo] = elemento.value;
+    async function salvarFinal() {
+        try {
+            // Obter dados do formulário
+            const dados = {
+                data: document.getElementById('entradaData').value,
+                descricao: document.getElementById('entradaDescricao').value,
+                categoria: document.getElementById('entradaCategoria').value,
+                forma_pagamento: document.getElementById('entradaFormaPagamento').value,
+                valor: parseFloat(document.getElementById('entradaValor').value)
+            };
+            
+            // Validar
+            if (!dados.data || !dados.descricao || !dados.categoria || !dados.forma_pagamento || !dados.valor) {
+                alert('Preencha todos os campos!');
+                return;
             }
-        });
-        
-        if (!todosExistem) return;
-        
-        // Mostrar valores
-        alert('Valores dos campos:\n' + 
-              'Data: ' + valores.entradaData + '\n' +
-              'Descrição: ' + valores.entradaDescricao + '\n' +
-              'Categoria: ' + valores.entradaCategoria + '\n' +
-              'Forma Pagamento: ' + valores.entradaFormaPagamento + '\n' +
-              'Valor: ' + valores.entradaValor);
-        
-        // Verificar usuário
-        const userStr = localStorage.getItem('currentUser');
-        if (!userStr) {
-            alert('Usuário não encontrado no localStorage!');
-            return;
+            
+            // Obter usuário
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                alert('Faça login primeiro!');
+                return;
+            }
+            
+            const user = JSON.parse(userStr);
+            if (!user.id) {
+                alert('Usuário inválido!');
+                return;
+            }
+            
+            // Adicionar user_id
+            dados.user_id = user.id;
+            
+            // Salvar com await
+            const { data, error } = await supabase
+                .from('entradas')
+                .insert([dados]);
+                
+            if (error) {
+                alert('Erro ao salvar: ' + error.message);
+            } else {
+                alert('Entrada salva com sucesso!');
+                // Fechar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEntrada'));
+                if (modal) modal.hide();
+                // Recarregar página
+                location.reload();
+            }
+            
+        } catch (err) {
+            alert('Erro: ' + err.message);
         }
-        
-        const user = JSON.parse(userStr);
-        alert('Usuário encontrado: ' + JSON.stringify(user));
-        
-        // Verificar Supabase
-        if (typeof supabase === 'undefined') {
-            alert('Supabase não está definido!');
-            return;
-        }
-        
-        alert('Tudo OK! Vamos salvar...');
-        salvarEntradaSimples();
     }
     
     function salvarEntradaSimples() {
