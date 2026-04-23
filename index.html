@@ -865,10 +865,15 @@
             if (error) {
                 alert('Erro ao salvar: ' + error.message);
             } else {
-                // Fechar modal e recarregar direto (sem alerta)
+                // Fechar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalEntrada'));
                 if (modal) modal.hide();
-                location.reload();
+                // Limpar formulário
+                document.getElementById('formEntrada').reset();
+                // Atualizar dados sem recarregar página
+                await entradasSystem.carregarEntradas();
+                await entradasSystem.renderizarTabela();
+                await dashboardSystem.init();
             }
             
         } catch (err) {
@@ -918,10 +923,15 @@
             if (error) {
                 alert('Erro ao salvar: ' + error.message);
             } else {
-                // Fechar modal e recarregar direto (sem alerta)
+                // Fechar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalSaida'));
                 if (modal) modal.hide();
-                location.reload();
+                // Limpar formulário
+                document.getElementById('formSaida').reset();
+                // Atualizar dados sem recarregar página
+                await saidasSystem.carregarSaidas();
+                await saidasSystem.renderizarTabela();
+                await dashboardSystem.init();
             }
             
         } catch (err) {
