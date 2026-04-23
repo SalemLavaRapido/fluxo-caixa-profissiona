@@ -532,14 +532,15 @@
             }
             
             tbody.innerHTML = veiculosPatio.map(v => {
-                const tempo = calcularTempo(v.data_entrada);
+                console.log('Veículo:', v);
+                const tempo = calcularTempo(v.data_entrada || new Date());
                 const valor = calcularValor(tempo.minutos);
                 
                 return `
                     <tr>
-                        <td><span class="placa-badge">${v.placa}</span></td>
+                        <td><span class="placa-badge">${v.placa || 'SEM PLACA'}</span></td>
                         <td>${v.cliente_nome || '-'}</td>
-                        <td>${formatarDataHora(v.data_entrada)}</td>
+                        <td>${v.data_entrada ? formatarDataHora(v.data_entrada) : '-'}</td>
                         <td><span class="tempo-badge pulse">${tempo.texto}</span></td>
                         <td><span class="valor-badge">R$ ${valor.toFixed(2)}</span></td>
                         <td>
