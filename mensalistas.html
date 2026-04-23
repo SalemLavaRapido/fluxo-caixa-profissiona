@@ -290,6 +290,57 @@
             color: rgba(255,255,255,0.7);
             margin-bottom: 10px;
         }
+        
+        .alertas-pagamento {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .alerta-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .alerta-vence-2dias {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alerta-vence-hoje {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alerta-atrasado {
+            border-left: 4px solid #dc3545;
+            background: rgba(220, 53, 69, 0.2);
+        }
+        
+        .badge-dias {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        
+        .badge-2dias {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .badge-hoje {
+            background: #17a2b8;
+            color: #fff;
+        }
+        
+        .badge-atrasado {
+            background: #dc3545;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -376,6 +427,15 @@
                     </button>
                 </div>
             </form>
+        </div>
+        
+        <!-- Alertas de Pagamento -->
+        <div class="alertas-pagamento" id="secaoAlertas" style="display: none;">
+            <h5 class="mb-3">
+                <i class="fas fa-bell me-2"></i>Alertas de Pagamento
+                <span class="badge bg-danger ms-2" id="totalAlertas">0</span>
+            </h5>
+            <div id="listaAlertas"></div>
         </div>
         
         <!-- Lista de Clientes -->
@@ -626,6 +686,7 @@
             
             renderizarClientes();
             atualizarEstatisticas();
+            verificarAlertasPagamento();
         }
         
         // Renderizar lista de clientes
@@ -936,6 +997,78 @@
             showAlert(`Pagamento registrado: ${clienteNome} - R$ ${valor.toFixed(2)}`, 'success');
             
             await carregarDados();
+        }
+        
+        // Verificar alertas de pagamento
+        function verificarAlertasPagamento() {
+            const hoje = new Date();
+            const diaHoje = hoje.getDate();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+            
+            const alertas = [];
+            
+            clientes.forEach(cliente => {
+                const diaVencimento = cliente.dia_vencimento || 10;
+                
+                // Calcular data de vencimento do mês atual
+                let dataVencimento = new Date(anoAtual, mesAtual, diaVencimento);
+                
+                // Diferença em dias
+                const diffDias = Math.floor((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+                
+                // No dia do vencimento
+                if (diffDias === 0) {
+                    alertas.push({
+                        tipo: 'hoje',
+                        cliente: cliente,
+                        mensagem: 'Vence HOJE',
+                        badge: 'badge-hoje',
+                        classe: 'alerta-vence-hoje',
+                        textoWhats: `Olá ${cliente.nome}! Sua mensalidade vence HOJE, dia ${diaVencimento}. Valor: R$ ${(cliente.valor_mensal || 0).toFixed(2)}. Aguardamos seu pagamento!`
+                    });
+                }
+                
+                // Atrasado (5 dias ou mais após vencimento)
+                if (diffDias <= -5) {
+                    const diasAtraso = Math.abs(diffDias);
+                    alertas.push({
+                        tipo: 'atrasado',
+                        cliente: cliente,
+                        mensagem: `${diasAtraso} dias em atraso`,
+                        badge: 'badge-atrasado',
+                        classe: 'alerta-atrasado',
+                        textoWhats: `Olá ${cliente.nome}! Sua mensalidade está em atraso há ${diasAtraso} dias. Valor: R$ ${(cliente.valor_mensal || 0).toFixed(2)}. Por favor, entre em contato para regularização.`
+                    });
+                }
+            });
+            
+            // Renderizar alertas
+            const secao = document.getElementById('secaoAlertas');
+            const lista = document.getElementById('listaAlertas');
+            const total = document.getElementById('totalAlertas');
+            
+            if (alertas.length === 0) {
+                secao.style.display = 'none';
+                return;
+            }
+            
+            secao.style.display = 'block';
+            total.textContent = alertas.length;
+            
+            lista.innerHTML = alertas.map(a => `
+                <div class="alerta-item ${a.classe}">
+                    <div>
+                        <strong>${a.cliente.nome}</strong>
+                        <span class="badge ${a.badge} ms-2">${a.mensagem}</span>
+                        <br>
+                        <small>Valor: R$ ${(a.cliente.valor_mensal || 0).toFixed(2)} | Venc. dia ${a.cliente.dia_vencimento || 10}</small>
+                    </div>
+                    <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${a.cliente.telefone}', '${a.textoWhats.replace(/'/g, "\\'")}')">
+                        <i class="bi bi-whatsapp me-1"></i>Enviar
+                    </button>
+                </div>
+            `).join('');
         }
         
         // Formatar telefone
