@@ -379,6 +379,16 @@
                         <span id="saidaHoras">-</span>
                     </div>
                     
+                    <div class="mb-3 mt-3">
+                        <label class="form-label"><i class="fas fa-credit-card me-2"></i>Forma de Pagamento</label>
+                        <select class="form-control form-control-custom" id="saidaFormaPagamento">
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix">Pix</option>
+                            <option value="debito">Débito</option>
+                            <option value="credito">Crédito</option>
+                        </select>
+                    </div>
+                    
                     <div class="resumo-total">
                         <div>VALOR TOTAL</div>
                         <div class="valor" id="saidaValor">R$ 0,00</div>
@@ -625,6 +635,7 @@
             const tempo = calcularTempo(veiculo.data_entrada);
             const horasCobradas = Math.ceil(tempo.minutos / 60);
             const valor = horasCobradas * VALOR_HORA;
+            const formaPagamento = document.getElementById('saidaFormaPagamento').value;
             
             // Atualizar registro de saída
             const { error: errorSaida } = await supabaseClient
@@ -652,7 +663,7 @@
                     descricao: `Estacionamento Avulso - ${veiculo.placa}${veiculo.cliente_nome ? ' - ' + veiculo.cliente_nome : ''}`,
                     placa: veiculo.placa,
                     categoria: 'avulso',
-                    forma_pagamento: 'dinheiro',
+                    forma_pagamento: formaPagamento,
                     valor: valor
                 }]);
             
