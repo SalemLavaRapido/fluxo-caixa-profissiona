@@ -402,7 +402,7 @@
         const SUPABASE_URL = 'https://emkiewosmlnyjnpujbui.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lld29zbWxueWpucHVqYnVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMxOTIsImV4cCI6MjA5MjM3OTE5Mn0.ohXoyqFJfyJxlyS1Efpykr0l0zezC2MZjVJWf55NV0c';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         // Valor por hora
         const VALOR_HORA = 8.00;
@@ -450,7 +450,7 @@
             // Verificar se já existe entrada aberta para esta placa
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
-            const { data: existente } = await supabase
+            const { data: existente } = await supabaseClient
                 .from('movimentacao_avulso')
                 .select('*')
                 .eq('user_id', user.id)
@@ -464,7 +464,7 @@
             }
             
             // Registrar entrada
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('movimentacao_avulso')
                 .insert([{
                     user_id: user.id,
@@ -494,7 +494,7 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (!user) return;
             
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('movimentacao_avulso')
                 .select('*')
                 .eq('user_id', user.id)
@@ -623,7 +623,7 @@
             const valor = horasCobradas * VALOR_HORA;
             
             // Atualizar registro de saída
-            const { error: errorSaida } = await supabase
+            const { error: errorSaida } = await supabaseClient
                 .from('movimentacao_avulso')
                 .update({
                     data_saida: agora.toISOString(),
@@ -640,7 +640,7 @@
             }
             
             // Registrar no fluxo de caixa (tabela entradas)
-            const { error: errorCaixa } = await supabase
+            const { error: errorCaixa } = await supabaseClient
                 .from('entradas')
                 .insert([{
                     user_id: user.id,
@@ -675,7 +675,7 @@
             const hoje = new Date().toISOString().split('T')[0];
             
             // Atendimentos finalizados hoje
-            const { data: finalizados } = await supabase
+            const { data: finalizados } = await supabaseClient
                 .from('movimentacao_avulso')
                 .select('*')
                 .eq('user_id', user.id)
