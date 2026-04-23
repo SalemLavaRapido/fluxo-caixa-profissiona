@@ -260,10 +260,15 @@ class SaidasSystem {
         return totais;
     }
 
-    // Formatar data
+    // Formatar data (corrigido para evitar problema de timezone)
     formatarData(dataString) {
-        const data = new Date(dataString);
-        return data.toLocaleDateString('pt-BR');
+        if (!dataString) return '-';
+        // Usar split para evitar problema de timezone
+        const partes = dataString.split('-');
+        if (partes.length === 3) {
+            return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+        return dataString;
     }
 
     // Formatar dinheiro
