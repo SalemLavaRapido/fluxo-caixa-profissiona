@@ -523,7 +523,7 @@
         const SUPABASE_URL = 'https://emkiewosmlnyjnpujbui.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lld29zbWxueWpucHVqYnVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMxOTIsImV4cCI6MjA5MjM3OTE5Mn0.ohXoyqFJfyJxlyS1Efpykr0l0zezC2MZjVJWf55NV0c';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         // Variáveis globais
         let clientes = [];
@@ -567,7 +567,7 @@
             
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('clientes_estacionamento')
                 .insert([{
                     user_id: user.id,
@@ -595,7 +595,7 @@
             if (!user) return;
             
             // Carregar clientes
-            const { data: clientesData } = await supabase
+            const { data: clientesData } = await supabaseClient
                 .from('clientes_estacionamento')
                 .select('*')
                 .eq('user_id', user.id)
@@ -605,7 +605,7 @@
             clientes = clientesData || [];
             
             // Carregar veículos
-            const { data: veiculosData } = await supabase
+            const { data: veiculosData } = await supabaseClient
                 .from('veiculos')
                 .select('*')
                 .eq('user_id', user.id);
@@ -616,7 +616,7 @@
             const dataLimite = new Date();
             dataLimite.setDate(dataLimite.getDate() - 60);
             
-            const { data: lavagensData } = await supabase
+            const { data: lavagensData } = await supabaseClient
                 .from('lavagens')
                 .select('*')
                 .eq('user_id', user.id)
@@ -782,7 +782,7 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
             // Verificar se placa já existe
-            const { data: existente } = await supabase
+            const { data: existente } = await supabaseClient
                 .from('veiculos')
                 .select('*')
                 .eq('user_id', user.id)
@@ -794,7 +794,7 @@
                 return;
             }
             
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('veiculos')
                 .insert([{
                     cliente_id: clienteId,
@@ -840,7 +840,7 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
             // Salvar lavagem
-            const { error: errorLavagem } = await supabase
+            const { error: errorLavagem } = await supabaseClient
                 .from('lavagens')
                 .insert([{
                     veiculo_id: veiculoId,
@@ -860,7 +860,7 @@
                 // Determinar categoria baseada no tipo
                 let categoria = 'lavagem_carro';
                 
-                await supabase
+                await supabaseClient
                     .from('entradas')
                     .insert([{
                         user_id: user.id,
@@ -905,7 +905,7 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
             // Salvar pagamento
-            const { error: errorPag } = await supabase
+            const { error: errorPag } = await supabaseClient
                 .from('pagamentos_mensalidade')
                 .insert([{
                     cliente_id: clienteId,
@@ -921,7 +921,7 @@
             }
             
             // Registrar no fluxo de caixa
-            await supabase
+            await supabaseClient
                 .from('entradas')
                 .insert([{
                     user_id: user.id,
