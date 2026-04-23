@@ -285,21 +285,29 @@
                 <i class="fas fa-car-side me-2"></i>Registrar Entrada de Veículo
             </h4>
             <form id="formEntrada" class="row g-3">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <input type="text" class="form-control form-control-custom" id="placaEntrada" 
                            placeholder="PLACA" maxlength="7" style="text-transform: uppercase;" required>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    <input type="text" class="form-control form-control-custom" id="modeloVeiculo" 
+                           placeholder="Modelo (ex: Gol)">
+                </div>
+                <div class="col-md-2">
+                    <input type="text" class="form-control form-control-custom" id="corVeiculo" 
+                           placeholder="Cor">
+                </div>
+                <div class="col-md-2">
                     <input type="text" class="form-control form-control-custom" id="nomeCliente" 
-                           placeholder="Nome do Cliente (opcional)">
+                           placeholder="Cliente">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <input type="tel" class="form-control form-control-custom" id="telefoneCliente" 
-                           placeholder="Telefone (opcional)">
+                           placeholder="Telefone">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-entrada w-100">
-                        <i class="fas fa-sign-in-alt me-2"></i>Registrar Entrada
+                        <i class="fas fa-sign-in-alt me-2"></i>Entrada
                     </button>
                 </div>
             </form>
@@ -317,6 +325,8 @@
                     <thead>
                         <tr>
                             <th><i class="fas fa-car me-2"></i>Placa</th>
+                            <th><i class="fas fa-car-side me-2"></i>Modelo</th>
+                            <th><i class="fas fa-palette me-2"></i>Cor</th>
                             <th><i class="fas fa-user me-2"></i>Cliente</th>
                             <th><i class="fas fa-clock me-2"></i>Entrada</th>
                             <th><i class="fas fa-hourglass-half me-2"></i>Tempo</th>
@@ -326,7 +336,7 @@
                     </thead>
                     <tbody id="tabelaPatio">
                         <tr>
-                            <td colspan="6" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 <i class="fas fa-parking"></i>
                                 <p>Nenhum veículo no pátio</p>
                             </td>
@@ -451,6 +461,8 @@
         // Registrar entrada
         async function registrarEntrada() {
             const placa = document.getElementById('placaEntrada').value.toUpperCase().trim();
+            const modelo = document.getElementById('modeloVeiculo').value.trim();
+            const cor = document.getElementById('corVeiculo').value.trim();
             const nome = document.getElementById('nomeCliente').value.trim();
             const telefone = document.getElementById('telefoneCliente').value.replace(/\D/g, '');
             
@@ -481,6 +493,8 @@
                 .insert([{
                     user_id: user.id,
                     placa: placa,
+                    modelo: modelo || null,
+                    cor: cor || null,
                     cliente_nome: nome || null,
                     telefone: telefone || null,
                     status: 'aberto'
@@ -535,7 +549,7 @@
             if (veiculosPatio.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="empty-state">
+                        <td colspan="8" class="empty-state">
                             <i class="fas fa-parking"></i>
                             <p>Nenhum veículo no pátio</p>
                         </td>
@@ -552,6 +566,8 @@
                 return `
                     <tr>
                         <td><span class="placa-badge">${v.placa || 'SEM PLACA'}</span></td>
+                        <td>${v.modelo || '-'}</td>
+                        <td>${v.cor || '-'}</td>
                         <td>${v.cliente_nome || '-'}</td>
                         <td>${v.data_entrada ? formatarDataHora(v.data_entrada) : '-'}</td>
                         <td><span class="tempo-badge pulse">${tempo.texto}</span></td>
