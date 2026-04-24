@@ -466,6 +466,7 @@
                         <tr>
                             <th><i class="fas fa-car me-2"></i>Placa</th>
                             <th><i class="fas fa-user me-2"></i>Cliente</th>
+                            <th><i class="fas fa-phone me-2"></i>Contato</th>
                             <th><i class="fas fa-sign-in-alt me-2"></i>Entrada</th>
                             <th><i class="fas fa-sign-out-alt me-2"></i>Saída</th>
                             <th><i class="fas fa-clock me-2"></i>Tempo</th>
@@ -475,7 +476,7 @@
                     </thead>
                     <tbody id="tabelaHistorico">
                         <tr>
-                            <td colspan="7" class="empty-state">
+                            <td colspan="8" class="empty-state">
                                 <i class="fas fa-history"></i>
                                 <p>Nenhum registro no histórico</p>
                             </td>
@@ -1191,20 +1192,21 @@
                     <tr>
                         <td><span class="placa-badge">${h.placa || '-'}</span></td>
                         <td>${h.cliente_nome || '-'}</td>
+                        <td class="text-center">
+                            ${h.telefone ? `
+                                <div><small>${formatarTelefone(h.telefone)}</small></div>
+                                <div class="mt-1">
+                                    <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${h.telefone}', '${mensagemWhatsApp.replace(/'/g, "\\'")}')">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </button>
+                                </div>
+                            ` : '-'}
+                        </td>
                         <td>${h.data_entrada ? formatarDataHora(h.data_entrada) : '-'}</td>
                         <td>${h.data_saida ? formatarDataHora(h.data_saida) : '-'}</td>
                         <td><span class="tempo-badge">${tempoTexto}</span></td>
                         <td><strong>R$ ${valorFormatado}</strong></td>
-                        <td class="text-center">
-                            <div>${formatarFormaPagamento(h.forma_pagamento)}</div>
-                            ${h.telefone ? `
-                                <div class="mt-2">
-                                    <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${h.telefone}', '${mensagemWhatsApp.replace(/'/g, "\\'")}')">
-                                        <i class="bi bi-whatsapp me-1"></i>Contato
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </td>
+                        <td class="text-center">${formatarFormaPagamento(h.forma_pagamento)}</td>
                     </tr>
                 `;
             }).join('');
@@ -1219,6 +1221,18 @@
                 'credito': '<i class="fas fa-credit-card text-warning"></i> Crédito'
             };
             return formas[forma] || forma || '-';
+        }
+        
+        // Formatar telefone
+        function formatarTelefone(telefone) {
+            if (!telefone) return '-';
+            const tel = telefone.replace(/\D/g, '');
+            if (tel.length === 11) {
+                return `(${tel.slice(0,2)}) ${tel.slice(2,7)}-${tel.slice(7)}`;
+            } else if (tel.length === 10) {
+                return `(${tel.slice(0,2)}) ${tel.slice(2,6)}-${tel.slice(6)}`;
+            }
+            return telefone;
         }
     </script>
 </body>
