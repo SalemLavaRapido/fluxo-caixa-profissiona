@@ -404,15 +404,22 @@
         
         <!-- Tabela de Veículos no Pátio -->
         <div class="card-custom p-4">
-            <h4 class="mb-4">
-                <i class="fas fa-parking me-2"></i>Veículos no Pátio
-                <span class="badge bg-primary ms-2" id="countPatio">0</span>
-            </h4>
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="fas fa-parking me-2"></i>Veículos no Pátio
+                    <span class="badge bg-primary ms-2" id="countPatio">0</span>
+                </h4>
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-custom" id="buscaComprovante" 
+                           placeholder="🔍 Buscar Nº Comprovante" style="width: 200px;" onkeyup="buscarPorComprovante()">
+                </div>
+            </div>
             
             <div class="table-responsive table-patio">
                 <table class="table mb-0">
                     <thead>
                         <tr>
+                            <th><i class="fas fa-hashtag me-2"></i>Nº</th>
                             <th><i class="fas fa-car me-2"></i>Placa</th>
                             <th><i class="fas fa-car-side me-2"></i>Modelo</th>
                             <th><i class="fas fa-palette me-2"></i>Cor</th>
@@ -425,7 +432,7 @@
                     </thead>
                     <tbody id="tabelaPatio">
                         <tr>
-                            <td colspan="8" class="empty-state">
+                            <td colspan="9" class="empty-state">
                                 <i class="fas fa-parking"></i>
                                 <p>Nenhum veículo no pátio</p>
                             </td>
@@ -675,6 +682,18 @@
                 return;
             }
             
+            // Buscar próximo número de comprovante
+            const { data: ultimoRegistro } = await supabaseClient
+                .from('movimentacao_avulso')
+                .select('numero_comprovante')
+                .eq('user_id', user.id)
+                .not('numero_comprovante', 'is', null)
+                .order('numero_comprovante', { ascending: false })
+                .limit(1)
+                .single();
+            
+            const proximoNumero = (ultimoRegistro?.numero_comprovante || 0) + 1;
+            
             // Registrar entrada
             let { data, error } = await supabaseClient
                 .from('movimentacao_avulso')
@@ -682,15 +701,17 @@
                     user_id: user.id,
                     placa: placa,
                     tipo_veiculo: tipoVeiculo,
+                    numero_comprovante: proximoNumero,
                     modelo: modelo || null,
                     cor: cor || null,
                     cliente_nome: nome || null,
                     telefone: telefone || null,
                     status: 'aberto'
-                }]);
+                }])
+                .select();
             
-            // Se erro por coluna tipo_veiculo não existir, tenta sem ela
-            if (error && error.message.includes('tipo_veiculo')) {
+            // Se erro por coluna não existir, tenta sem ela
+            if (error) {
                 const resultado = await supabaseClient
                     .from('movimentacao_avulso')
                     .insert([{
@@ -701,7 +722,9 @@
                         cliente_nome: nome || null,
                         telefone: telefone || null,
                         status: 'aberto'
-                    }]);
+                    }])
+                    .select();
+                data = resultado.data;
                 error = resultado.error;
             }
             
@@ -710,11 +733,16 @@
                 return;
             }
             
+            // Número do comprovante formatado
+            const numeroComprovante = data?.[0]?.numero_comprovante || proximoNumero;
+            const numeroFormatado = String(numeroComprovante).padStart(7, '0');
+            
             // Imprimir cupom de entrada
             imprimirCupomEntrada({
                 placa: placa,
                 cliente: nome,
                 tipoVeiculo: tipoVeiculo,
+                numeroComprovante: numeroFormatado,
                 valorHora: VALORES_HORA[tipoVeiculo],
                 data: new Date().toLocaleString('pt-BR')
             });
@@ -763,7 +791,7 @@
             if (veiculosPatio.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="empty-state">
+                        <td colspan="9" class="empty-state">
                             <i class="fas fa-parking"></i>
                             <p>Nenhum veículo no pátio</p>
                         </td>
@@ -772,15 +800,37 @@
                 return;
             }
             
-            tbody.innerHTML = veiculosPatio.map(v => {
-                console.log('Veículo:', v);
+            // Filtrar por busca de comprovante
+            const buscaComprovante = document.getElementById('buscaComprovante')?.value?.trim() || '';
+            let veiculosFiltrados = veiculosPatio;
+            
+            if (buscaComprovante) {
+                const numeroBusca = parseInt(buscaComprovante, 10);
+                veiculosFiltrados = veiculosPatio.filter(v => v.numero_comprovante === numeroBusca);
+            }
+            
+            if (veiculosFiltrados.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Nenhum veículo encontrado</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = veiculosFiltrados.map(v => {
                 const tempo = calcularTempo(v.data_entrada || new Date());
                 const tipoVeiculo = v.tipo_veiculo || 'carro';
                 const valor = calcularValor(tempo.minutos, tipoVeiculo);
                 const iconeTipo = tipoVeiculo === 'moto' ? '🏍️' : tipoVeiculo === 'caminhonete' ? '🛻' : '🚗';
+                const numeroFormatado = v.numero_comprovante ? String(v.numero_comprovante).padStart(7, '0') : '-';
                 
                 return `
                     <tr>
+                        <td><strong>${v.numero_comprovante || '-'}</strong></td>
                         <td><span class="placa-badge">${iconeTipo} ${v.placa || 'SEM PLACA'}</span></td>
                         <td>${v.modelo || '-'}</td>
                         <td>${v.cor || '-'}</td>
@@ -789,7 +839,7 @@
                         <td><span class="tempo-badge pulse">${tempo.texto}</span></td>
                         <td><span class="valor-badge">R$ ${valor.toFixed(2)}</span></td>
                         <td>
-                            <button class="btn btn-secondary btn-sm me-1" onclick="reimprimirCupom('${v.placa}', '${v.cliente_nome || ''}', '${v.data_entrada}', '${tipoVeiculo}')" title="Reimprimir">
+                            <button class="btn btn-secondary btn-sm me-1" onclick="reimprimirCupom('${v.placa}', '${v.cliente_nome || ''}', '${v.data_entrada}', '${tipoVeiculo}', '${numeroFormatado}')" title="Reimprimir">
                                 <i class="fas fa-print"></i>
                             </button>
                             ${v.telefone ? `
@@ -1288,11 +1338,17 @@
         
         // ========== FUNÇÕES DE IMPRESSÃO ==========
         
+        // Buscar por número do comprovante
+        function buscarPorComprovante() {
+            renderizarTabela();
+        }
+        
         // Imprimir cupom de entrada
         function imprimirCupomEntrada(dados) {
             const tipoVeiculo = dados.tipoVeiculo || 'carro';
             const valorHora = dados.valorHora || VALORES_HORA[tipoVeiculo] || 8.00;
-            const iconeTipo = tipoVeiculo === 'moto' ? '🏍️ MOTO' : tipoVeiculo === 'caminhonete' ? '🛻 CAMINHONETE' : '🚗 CARRO';
+            const nomeTipo = tipoVeiculo === 'moto' ? 'MOTO' : tipoVeiculo === 'caminhonete' ? 'CAMINHONETE' : 'CARRO';
+            const numeroComprovante = dados.numeroComprovante || '0000000';
             
             const conteudo = `
                 <!DOCTYPE html>
@@ -1312,7 +1368,8 @@
                         .info { font-size: 10px; margin-bottom: 2px; }
                         .linha { border-top: 1px dashed #000; margin: 5px 0; }
                         .destaque { font-size: 16px; font-weight: bold; margin: 5px 0; }
-                        .tipo { font-size: 12px; font-weight: bold; margin: 3px 0; }
+                        .numero { font-size: 18px; font-weight: bold; margin: 5px 0; }
+                        .tipo { font-size: 11px; font-weight: bold; margin: 3px 0; }
                         .aviso { font-size: 9px; margin: 3px 0; }
                         .rodape { font-size: 10px; margin-top: 5px; }
                         @media print {
@@ -1329,11 +1386,12 @@
                     <div class="info">CNPJ: 63.992.071/0001-38</div>
                     
                     <div class="linha"></div>
-                    <div class="destaque">COMPROVANTE DE ENTRADA</div>
+                    <div class="info">COMPROVANTE DE ENTRADA</div>
+                    <div class="numero">Nº ${numeroComprovante}</div>
                     <div class="linha"></div>
                     
                     <div class="destaque">${dados.placa}</div>
-                    <div class="tipo">${iconeTipo} - R$ ${valorHora.toFixed(2)}/hora</div>
+                    <div class="tipo">${nomeTipo} - R$ ${valorHora.toFixed(2)}/hora</div>
                     <div class="info"><strong>Cliente:</strong> ${dados.cliente || '---'}</div>
                     <div class="info"><strong>Entrada:</strong> ${dados.data}</div>
                     
@@ -1360,12 +1418,13 @@
         }
         
         // Reimprimir cupom
-        function reimprimirCupom(placa, cliente, dataEntrada, tipoVeiculo = 'carro') {
+        function reimprimirCupom(placa, cliente, dataEntrada, tipoVeiculo = 'carro', numeroComprovante = '0000000') {
             const dataFormatada = new Date(dataEntrada).toLocaleString('pt-BR');
             imprimirCupomEntrada({
                 placa: placa,
                 cliente: cliente,
                 tipoVeiculo: tipoVeiculo,
+                numeroComprovante: numeroComprovante,
                 valorHora: VALORES_HORA[tipoVeiculo],
                 data: dataFormatada
             });
