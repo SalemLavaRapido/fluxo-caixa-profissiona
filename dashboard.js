@@ -164,34 +164,34 @@ class DashboardSystem {
         await this.atualizarGraficoEvolucao();
     }
 
-    // Criar gráfico de categorias
-    async atualizarGraficoCategorias() {
-        const ctx = document.getElementById('categoriaChart');
+    // Criar gráfico de categorias - ENTRADAS
+    async atualizarGraficoCategoriaEntradas() {
+        const ctx = document.getElementById('categoriaEntradasChart');
         if (!ctx) return;
 
         // Destruir gráfico anterior se existir
-        if (this.categoriaChart) {
-            this.categoriaChart.destroy();
+        if (this.categoriaEntradasChart) {
+            this.categoriaEntradasChart.destroy();
         }
 
-        // Obter dados por categoria
-        const dados = await this.obterDadosPorCategoria();
+        // Obter dados por categoria de entradas
+        const dados = await this.obterDadosPorCategoriaEntradas();
 
-        this.categoriaChart = new Chart(ctx, {
+        this.categoriaEntradasChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: dados.labels,
                 datasets: [{
                     data: dados.valores,
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)',
-                        'rgba(255, 159, 64, 0.8)',
-                        'rgba(199, 199, 199, 0.8)',
-                        'rgba(83, 102, 255, 0.8)'
+                        'rgba(40, 167, 69, 0.8)',
+                        'rgba(32, 201, 151, 0.8)',
+                        'rgba(102, 178, 102, 0.8)',
+                        'rgba(0, 128, 0, 0.8)',
+                        'rgba(144, 238, 144, 0.8)',
+                        'rgba(60, 179, 113, 0.8)',
+                        'rgba(46, 139, 87, 0.8)',
+                        'rgba(0, 100, 0, 0.8)'
                     ],
                     borderWidth: 1
                 }]
@@ -217,57 +217,51 @@ class DashboardSystem {
         });
     }
 
-    // Criar gráfico de evolução (Entradas vs Saídas)
-    async atualizarGraficoEvolucao() {
-        const ctx = document.getElementById('evolucaoChart');
+    // Criar gráfico de categorias - SAÍDAS
+    async atualizarGraficoCategoriaSaidas() {
+        const ctx = document.getElementById('categoriaSaidasChart');
         if (!ctx) return;
 
         // Destruir gráfico anterior se existir
-        if (this.evolucaoChart) {
-            this.evolucaoChart.destroy();
+        if (this.categoriaSaidasChart) {
+            this.categoriaSaidasChart.destroy();
         }
 
-        // Obter dados mensais (entradas e saídas separadas)
-        const dados = await this.obterDadosMensais();
+        // Obter dados por categoria de saídas
+        const dados = await this.obterDadosPorCategoriaSaidas();
 
-        this.evolucaoChart = new Chart(ctx, {
-            type: 'line',
+        this.categoriaSaidasChart = new Chart(ctx, {
+            type: 'doughnut',
             data: {
                 labels: dados.labels,
-                datasets: [
-                    {
-                        label: 'Entradas',
-                        data: dados.entradas,
-                        borderColor: 'rgba(40, 167, 69, 1)',
-                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Saídas',
-                        data: dados.saidas,
-                        borderColor: 'rgba(220, 53, 69, 1)',
-                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
-                        tension: 0.4,
-                        fill: true
-                    }
-                ]
+                datasets: [{
+                    data: dados.valores,
+                    backgroundColor: [
+                        'rgba(220, 53, 69, 0.8)',
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(255, 159, 64, 0.8)',
+                        'rgba(255, 87, 51, 0.8)',
+                        'rgba(178, 34, 34, 0.8)',
+                        'rgba(205, 92, 92, 0.8)',
+                        'rgba(139, 0, 0, 0.8)',
+                        'rgba(255, 69, 0, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return 'R$ ' + value.toLocaleString('pt-BR');
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = 'R$ ' + context.parsed.toLocaleString('pt-BR');
+                                return label + ': ' + value;
                             }
                         }
                     }
@@ -276,7 +270,50 @@ class DashboardSystem {
         });
     }
 
-    // Obter dados por categoria
+    // Manter compatibilidade com chamada antiga
+    async atualizarGraficoCategorias() {
+        await this.atualizarGraficoCategoriaEntradas();
+        await this.atualizarGraficoCategoriaSaidas();
+    }
+
+    // Função vazia para evolução (removido)
+    async atualizarGraficoEvolucao() {
+        // Gráfico de evolução removido - substituído por categorias separadas
+    }
+
+    // Obter dados por categoria - ENTRADAS
+    async obterDadosPorCategoriaEntradas() {
+        const categorias = {};
+        
+        // Agrupar apenas entradas por categoria
+        entradasSystem.entradas.forEach(entrada => {
+            const cat = entradasSystem.formatarCategoria(entrada.categoria);
+            categorias[cat] = (categorias[cat] || 0) + parseFloat(entrada.valor);
+        });
+
+        return {
+            labels: Object.keys(categorias),
+            valores: Object.values(categorias)
+        };
+    }
+
+    // Obter dados por categoria - SAÍDAS
+    async obterDadosPorCategoriaSaidas() {
+        const categorias = {};
+        
+        // Agrupar apenas saídas por categoria
+        saidasSystem.saidas.forEach(saida => {
+            const cat = saidasSystem.formatarCategoria(saida.categoria);
+            categorias[cat] = (categorias[cat] || 0) + parseFloat(saida.valor);
+        });
+
+        return {
+            labels: Object.keys(categorias),
+            valores: Object.values(categorias)
+        };
+    }
+
+    // Obter dados por categoria (mantido para compatibilidade)
     async obterDadosPorCategoria() {
         const categorias = {};
         
