@@ -580,6 +580,12 @@
                         </select>
                     </div>
                     
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-tag me-2"></i>Desconto (R$)</label>
+                        <input type="number" class="form-control form-control-custom" id="saidaDesconto" 
+                               placeholder="0.00" min="0" step="0.01" value="0" onchange="atualizarValorComDesconto()">
+                    </div>
+                    
                     <div class="resumo-total">
                         <div>VALOR TOTAL</div>
                         <div class="valor" id="saidaValor">R$ 0,00</div>
@@ -887,6 +893,9 @@
             renderizarTabela();
         }
         
+        // Variável para armazenar valor original (sem desconto)
+        let valorOriginalSaida = 0;
+        
         // Abrir modal de saída
         function abrirModalSaida(id) {
             const veiculo = veiculosPatio.find(v => v.id === id);
@@ -900,6 +909,9 @@
             const valor = horasCobradas * valorHora;
             const iconeTipo = tipoVeiculo === 'moto' ? '🏍️' : tipoVeiculo === 'caminhonete' ? '🛻' : '🚗';
             
+            // Armazenar valor original
+            valorOriginalSaida = valor;
+            
             document.getElementById('saidaId').value = id;
             document.getElementById('saidaPlaca').textContent = `${iconeTipo} ${veiculo.placa}`;
             document.getElementById('saidaCliente').textContent = veiculo.cliente_nome || '-';
@@ -908,6 +920,7 @@
             document.getElementById('saidaTempo').textContent = tempo.texto;
             document.getElementById('saidaHoras').textContent = `${horasCobradas} hora(s)`;
             document.getElementById('saidaValor').textContent = `R$ ${valor.toFixed(2)}`;
+            document.getElementById('saidaDesconto').value = 0;
             
             // Atualizar texto do valor por hora
             const infoValor = document.querySelector('.resumo-total small');
@@ -915,6 +928,27 @@
             
             const modal = new bootstrap.Modal(document.getElementById('modalSaida'));
             modal.show();
+        }
+        
+        // Atualizar valor com desconto
+        function atualizarValorComDesconto() {
+            const desconto = parseFloat(document.getElementById('saidaDesconto').value) || 0;
+            const valorFinal = Math.max(0, valorOriginalSaida - desconto);
+            document.getElementById('saidaValor').textContent = `R$ ${valorFinal.toFixed(2)}`;
+            
+            // Mostrar desconto aplicado
+            const infoValor = document.querySelector('.resumo-total small');
+            if (infoValor) {
+                if (desconto > 0) {
+                    infoValor.textContent = `Original: R$ ${valorOriginalSaida.toFixed(2)} | Desconto: R$ ${desconto.toFixed(2)}`;
+                } else {
+                    const id = document.getElementById('saidaId').value;
+                    const veiculo = veiculosPatio.find(v => v.id === id);
+                    const tipoVeiculo = veiculo?.tipo_veiculo || 'carro';
+                    const valorHora = VALORES_HORA[tipoVeiculo] || VALORES_HORA['carro'];
+                    infoValor.textContent = `R$ ${valorHora.toFixed(2)} por hora`;
+                }
+            }
         }
         
         // Confirmar saída
@@ -929,7 +963,9 @@
             const horasCobradas = Math.ceil(tempo.minutos / 60);
             const tipoVeiculo = veiculo.tipo_veiculo || 'carro';
             const valorHora = VALORES_HORA[tipoVeiculo] || VALORES_HORA['carro'];
-            const valor = horasCobradas * valorHora;
+            const valorOriginal = horasCobradas * valorHora;
+            const desconto = parseFloat(document.getElementById('saidaDesconto').value) || 0;
+            const valor = Math.max(0, valorOriginal - desconto);
             const formaPagamento = document.getElementById('saidaFormaPagamento').value;
             
             // Atualizar registro de saída
@@ -940,6 +976,7 @@
                     minutos: tempo.minutos,
                     horas: horasCobradas,
                     valor: valor,
+                    desconto: desconto,
                     forma_pagamento: formaPagamento,
                     status: 'finalizado'
                 })
@@ -951,12 +988,13 @@
             }
             
             // Registrar no fluxo de caixa (tabela entradas)
+            const descricaoDesconto = desconto > 0 ? ` (Desc: R$${desconto.toFixed(2)})` : '';
             const { error: errorCaixa } = await supabaseClient
                 .from('entradas')
                 .insert([{
                     user_id: user.id,
                     data: agora.toISOString().split('T')[0],
-                    descricao: `Estacionamento Avulso - ${veiculo.placa}${veiculo.cliente_nome ? ' - ' + veiculo.cliente_nome : ''}`,
+                    descricao: `Estacionamento Avulso - ${veiculo.placa}${veiculo.cliente_nome ? ' - ' + veiculo.cliente_nome : ''}${descricaoDesconto}`,
                     placa: veiculo.placa,
                     categoria: 'avulso',
                     forma_pagamento: formaPagamento,
@@ -971,7 +1009,8 @@
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalSaida'));
             modal.hide();
             
-            showAlert(`Saída registrada: ${veiculo.placa} - R$ ${valor.toFixed(2)}`, 'success');
+            const msgDesconto = desconto > 0 ? ` (Desconto: R$ ${desconto.toFixed(2)})` : '';
+            showAlert(`Saída registrada: ${veiculo.placa} - R$ ${valor.toFixed(2)}${msgDesconto}`, 'success');
             
             // Recarregar dados
             await carregarVeiculosPatio();
