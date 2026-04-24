@@ -1184,6 +1184,8 @@
             
             tbody.innerHTML = historicoFiltrado.map(h => {
                 const tempoTexto = h.horas ? `${h.horas}h` : (h.minutos ? `${h.minutos}min` : '-');
+                const valorFormatado = (h.valor || 0).toFixed(2);
+                const mensagemWhatsApp = `Olá ${h.cliente_nome || 'Cliente'}! Seu veículo ${h.placa} ficou estacionado por ${tempoTexto}. Valor: R$ ${valorFormatado}. Obrigado pela preferência!`;
                 
                 return `
                     <tr>
@@ -1192,8 +1194,15 @@
                         <td>${h.data_entrada ? formatarDataHora(h.data_entrada) : '-'}</td>
                         <td>${h.data_saida ? formatarDataHora(h.data_saida) : '-'}</td>
                         <td><span class="tempo-badge">${tempoTexto}</span></td>
-                        <td><strong>R$ ${(h.valor || 0).toFixed(2)}</strong></td>
-                        <td>${formatarFormaPagamento(h.forma_pagamento)}</td>
+                        <td><strong>R$ ${valorFormatado}</strong></td>
+                        <td>
+                            ${h.telefone ? `
+                                <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${h.telefone}', '${mensagemWhatsApp.replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-whatsapp"></i>
+                                </button>
+                            ` : ''}
+                            ${formatarFormaPagamento(h.forma_pagamento)}
+                        </td>
                     </tr>
                 `;
             }).join('');
