@@ -217,7 +217,7 @@ class DashboardSystem {
         });
     }
 
-    // Criar gráfico de evolução
+    // Criar gráfico de evolução (Entradas vs Saídas)
     async atualizarGraficoEvolucao() {
         const ctx = document.getElementById('evolucaoChart');
         if (!ctx) return;
@@ -227,28 +227,39 @@ class DashboardSystem {
             this.evolucaoChart.destroy();
         }
 
-        // Obter dados de evolução
-        const dados = await this.obterDadosEvolucao();
+        // Obter dados mensais (entradas e saídas separadas)
+        const dados = await this.obterDadosMensais();
 
         this.evolucaoChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: dados.labels,
-                datasets: [{
-                    label: 'Saldo Acumulado',
-                    data: dados.saldos,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                    tension: 0.4,
-                    fill: true
-                }]
+                datasets: [
+                    {
+                        label: 'Entradas',
+                        data: dados.entradas,
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Saídas',
+                        data: dados.saidas,
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top'
                     }
                 },
                 scales: {
@@ -288,7 +299,7 @@ class DashboardSystem {
     }
 
     // Obter dados de evolução
-    async obterDadosEolucao() {
+    async obterDadosEvolucao() {
         const dados = await this.obterDadosMensais();
         const saldos = [];
         let saldoAcumulado = 0;
