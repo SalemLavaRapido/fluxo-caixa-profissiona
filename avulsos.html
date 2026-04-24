@@ -173,6 +173,83 @@
             border: none;
         }
         
+        .btn-buscar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-weight: bold;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-buscar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: #fff;
+        }
+        
+        .lista-busca {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .item-busca {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .item-busca:hover {
+            background: rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+        }
+        
+        .table-historico {
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .table-historico th {
+            background: rgba(245, 87, 108, 0.3);
+            color: #fff;
+            font-weight: 600;
+            padding: 15px;
+            border: none;
+        }
+        
+        .table-historico td {
+            color: #333;
+            background: rgba(255,255,255,0.9);
+            padding: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            vertical-align: middle;
+        }
+        
+        .filtros-historico {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-tabs-custom .nav-link {
+            color: rgba(255,255,255,0.7);
+            border: none;
+            padding: 15px 25px;
+            font-weight: 600;
+        }
+        
+        .nav-tabs-custom .nav-link.active {
+            background: rgba(102, 126, 234, 0.3);
+            color: #fff;
+            border-radius: 10px 10px 0 0;
+        }
+        
         .resumo-item {
             display: flex;
             justify-content: space-between;
@@ -284,6 +361,11 @@
             <h4 class="mb-4">
                 <i class="fas fa-car-side me-2"></i>Registrar Entrada de Veículo
             </h4>
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-buscar" onclick="abrirModalBusca()">
+                    <i class="fas fa-search me-2"></i>Buscar Cliente
+                </button>
+            </div>
             <form id="formEntrada" class="row g-3">
                 <div class="col-md-2">
                     <input type="text" class="form-control form-control-custom" id="placaEntrada" 
@@ -343,6 +425,90 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+        
+        <!-- Seção de Histórico -->
+        <div class="card-custom p-4 mt-4">
+            <h4 class="mb-4">
+                <i class="fas fa-history me-2"></i>Histórico de Estadias
+                <span class="badge bg-secondary ms-2" id="countHistorico">0</span>
+            </h4>
+            
+            <!-- Filtros -->
+            <div class="filtros-historico">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-custom" id="filtroNome" 
+                               placeholder="Filtrar por nome" onkeyup="filtrarHistorico()">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" class="form-control form-control-custom" id="filtroPlaca" 
+                               placeholder="Filtrar por placa" style="text-transform: uppercase;" onkeyup="filtrarHistorico()">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" class="form-control form-control-custom" id="filtroDataInicio" onchange="filtrarHistorico()">
+                    </div>
+                    <div class="col-md-2">
+                        <input type="date" class="form-control form-control-custom" id="filtroDataFim" onchange="filtrarHistorico()">
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-buscar w-100" onclick="limparFiltros()">
+                            <i class="fas fa-eraser me-2"></i>Limpar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-responsive table-historico">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-car me-2"></i>Placa</th>
+                            <th><i class="fas fa-user me-2"></i>Cliente</th>
+                            <th><i class="fas fa-sign-in-alt me-2"></i>Entrada</th>
+                            <th><i class="fas fa-sign-out-alt me-2"></i>Saída</th>
+                            <th><i class="fas fa-clock me-2"></i>Tempo</th>
+                            <th><i class="fas fa-dollar-sign me-2"></i>Valor</th>
+                            <th><i class="fas fa-credit-card me-2"></i>Pagamento</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaHistorico">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-history"></i>
+                                <p>Nenhum registro no histórico</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Busca -->
+    <div class="modal fade modal-custom" id="modalBusca" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: var(--primary-gradient);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-search me-2"></i>Buscar Cliente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <input type="text" class="form-control form-control-custom" id="campoBusca" 
+                               placeholder="Digite nome ou placa..." onkeyup="buscarClientes()">
+                    </div>
+                    
+                    <div class="lista-busca" id="listaBusca">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-search fa-3x mb-3" style="opacity: 0.3;"></i>
+                            <p>Digite para buscar clientes ou veículos</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -431,6 +597,8 @@
         
         // Variáveis globais
         let veiculosPatio = [];
+        let historicoEstadias = [];
+        let historicoFiltrado = [];
         let intervaloAtualizacao = null;
         
         // Verificar login ao carregar
@@ -443,8 +611,15 @@
             
             document.getElementById('userInfo').textContent = user.email;
             
+            // Configurar datas padrão dos filtros
+            const hoje = new Date();
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            document.getElementById('filtroDataInicio').value = inicioMes.toISOString().split('T')[0];
+            document.getElementById('filtroDataFim').value = hoje.toISOString().split('T')[0];
+            
             await carregarVeiculosPatio();
             await carregarEstatisticas();
+            await carregarHistorico();
             
             // Atualizar a cada 1 minuto
             intervaloAtualizacao = setInterval(() => {
@@ -768,6 +943,271 @@
         function logout() {
             localStorage.removeItem('currentUser');
             window.location.href = 'index.html';
+        }
+        
+        // ========== FUNÇÕES DE BUSCA ==========
+        
+        // Abrir modal de busca
+        function abrirModalBusca() {
+            document.getElementById('campoBusca').value = '';
+            document.getElementById('listaBusca').innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-search fa-3x mb-3" style="opacity: 0.3;"></i>
+                    <p>Digite para buscar clientes ou veículos</p>
+                </div>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('modalBusca'));
+            modal.show();
+        }
+        
+        // Buscar clientes
+        async function buscarClientes() {
+            const termo = document.getElementById('campoBusca').value.trim().toUpperCase();
+            const lista = document.getElementById('listaBusca');
+            
+            if (termo.length < 2) {
+                lista.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-search fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>Digite pelo menos 2 caracteres</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            
+            // Buscar em clientes_estacionamento
+            const { data: clientes } = await supabaseClient
+                .from('clientes_estacionamento')
+                .select('*')
+                .eq('user_id', user.id)
+                .ilike('nome', `%${termo}%`);
+            
+            // Buscar em veículos
+            const { data: veiculos } = await supabaseClient
+                .from('veiculos')
+                .select('*, clientes_estacionamento(nome, telefone)')
+                .eq('user_id', user.id)
+                .ilike('placa', `%${termo}%`);
+            
+            // Buscar no histórico de avulsos
+            const { data: historico } = await supabaseClient
+                .from('movimentacao_avulso')
+                .select('*')
+                .eq('user_id', user.id)
+                .or(`placa.ilike.%${termo}%,cliente_nome.ilike.%${termo}%`)
+                .order('data_entrada', { ascending: false })
+                .limit(20);
+            
+            let resultados = [];
+            
+            // Adicionar clientes mensalistas
+            if (clientes && clientes.length > 0) {
+                clientes.forEach(c => {
+                    resultados.push({
+                        tipo: 'mensalista',
+                        nome: c.nome,
+                        telefone: c.telefone,
+                        placa: '-'
+                    });
+                });
+            }
+            
+            // Adicionar veículos de mensalistas
+            if (veiculos && veiculos.length > 0) {
+                veiculos.forEach(v => {
+                    resultados.push({
+                        tipo: 'veiculo',
+                        nome: v.clientes_estacionamento?.nome || '-',
+                        telefone: v.clientes_estacionamento?.telefone || '',
+                        placa: v.placa,
+                        modelo: v.modelo,
+                        cor: v.cor
+                    });
+                });
+            }
+            
+            // Adicionar do histórico de avulsos (sem duplicar)
+            if (historico && historico.length > 0) {
+                const placasJaAdicionadas = new Set(resultados.map(r => r.placa));
+                historico.forEach(h => {
+                    if (!placasJaAdicionadas.has(h.placa)) {
+                        resultados.push({
+                            tipo: 'historico',
+                            nome: h.cliente_nome || '-',
+                            telefone: h.telefone || '',
+                            placa: h.placa,
+                            modelo: h.modelo,
+                            cor: h.cor
+                        });
+                        placasJaAdicionadas.add(h.placa);
+                    }
+                });
+            }
+            
+            if (resultados.length === 0) {
+                lista.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-car fa-3x mb-3" style="opacity: 0.3;"></i>
+                        <p>Nenhum resultado encontrado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            lista.innerHTML = resultados.map(r => `
+                <div class="item-busca" onclick="selecionarCliente('${r.placa}', '${r.nome}', '${r.telefone}', '${r.modelo || ''}', '${r.cor || ''}')">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${r.placa !== '-' ? `<span class="placa-badge me-2">${r.placa}</span>` : ''}</strong>
+                            <span>${r.nome}</span>
+                            ${r.modelo ? `<small class="text-muted ms-2">${r.modelo} ${r.cor || ''}</small>` : ''}
+                        </div>
+                        <div>
+                            <span class="badge ${r.tipo === 'mensalista' ? 'bg-success' : r.tipo === 'veiculo' ? 'bg-primary' : 'bg-secondary'}">
+                                ${r.tipo === 'mensalista' ? 'Mensalista' : r.tipo === 'veiculo' ? 'Veículo' : 'Histórico'}
+                            </span>
+                        </div>
+                    </div>
+                    ${r.telefone ? `<small class="text-muted"><i class="fas fa-phone me-1"></i>${r.telefone}</small>` : ''}
+                </div>
+            `).join('');
+        }
+        
+        // Selecionar cliente da busca
+        function selecionarCliente(placa, nome, telefone, modelo, cor) {
+            if (placa && placa !== '-') {
+                document.getElementById('placaEntrada').value = placa;
+            }
+            if (nome && nome !== '-') {
+                document.getElementById('nomeCliente').value = nome;
+            }
+            if (telefone) {
+                document.getElementById('telefoneCliente').value = telefone;
+            }
+            if (modelo) {
+                document.getElementById('modeloVeiculo').value = modelo;
+            }
+            if (cor) {
+                document.getElementById('corVeiculo').value = cor;
+            }
+            
+            // Fechar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalBusca'));
+            modal.hide();
+            
+            showAlert('Cliente selecionado! Complete os dados e registre a entrada.', 'success');
+        }
+        
+        // ========== FUNÇÕES DE HISTÓRICO ==========
+        
+        // Carregar histórico
+        async function carregarHistorico() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+            
+            const dataInicio = document.getElementById('filtroDataInicio').value;
+            const dataFim = document.getElementById('filtroDataFim').value;
+            
+            let query = supabaseClient
+                .from('movimentacao_avulso')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('status', 'finalizado')
+                .order('data_saida', { ascending: false });
+            
+            if (dataInicio) {
+                query = query.gte('data_saida', dataInicio + 'T00:00:00');
+            }
+            if (dataFim) {
+                query = query.lte('data_saida', dataFim + 'T23:59:59');
+            }
+            
+            const { data, error } = await query.limit(100);
+            
+            if (error) {
+                console.error('Erro ao carregar histórico:', error);
+                return;
+            }
+            
+            historicoEstadias = data || [];
+            historicoFiltrado = [...historicoEstadias];
+            renderizarHistorico();
+        }
+        
+        // Filtrar histórico
+        function filtrarHistorico() {
+            const filtroNome = document.getElementById('filtroNome').value.toLowerCase().trim();
+            const filtroPlaca = document.getElementById('filtroPlaca').value.toUpperCase().trim();
+            
+            historicoFiltrado = historicoEstadias.filter(h => {
+                const matchNome = !filtroNome || (h.cliente_nome && h.cliente_nome.toLowerCase().includes(filtroNome));
+                const matchPlaca = !filtroPlaca || (h.placa && h.placa.includes(filtroPlaca));
+                return matchNome && matchPlaca;
+            });
+            
+            renderizarHistorico();
+        }
+        
+        // Limpar filtros
+        function limparFiltros() {
+            document.getElementById('filtroNome').value = '';
+            document.getElementById('filtroPlaca').value = '';
+            
+            const hoje = new Date();
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            document.getElementById('filtroDataInicio').value = inicioMes.toISOString().split('T')[0];
+            document.getElementById('filtroDataFim').value = hoje.toISOString().split('T')[0];
+            
+            carregarHistorico();
+        }
+        
+        // Renderizar histórico
+        function renderizarHistorico() {
+            const tbody = document.getElementById('tabelaHistorico');
+            const count = document.getElementById('countHistorico');
+            
+            count.textContent = historicoFiltrado.length;
+            
+            if (historicoFiltrado.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <p>Nenhum registro no histórico</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = historicoFiltrado.map(h => {
+                const tempoTexto = h.horas ? `${h.horas}h` : (h.minutos ? `${h.minutos}min` : '-');
+                
+                return `
+                    <tr>
+                        <td><span class="placa-badge">${h.placa || '-'}</span></td>
+                        <td>${h.cliente_nome || '-'}</td>
+                        <td>${h.data_entrada ? formatarDataHora(h.data_entrada) : '-'}</td>
+                        <td>${h.data_saida ? formatarDataHora(h.data_saida) : '-'}</td>
+                        <td><span class="tempo-badge">${tempoTexto}</span></td>
+                        <td><strong>R$ ${(h.valor || 0).toFixed(2)}</strong></td>
+                        <td>${formatarFormaPagamento(h.forma_pagamento)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Formatar forma de pagamento
+        function formatarFormaPagamento(forma) {
+            const formas = {
+                'dinheiro': '<i class="fas fa-money-bill-wave text-success"></i> Dinheiro',
+                'pix': '<i class="fas fa-qrcode text-primary"></i> Pix',
+                'debito': '<i class="fas fa-credit-card text-info"></i> Débito',
+                'credito': '<i class="fas fa-credit-card text-warning"></i> Crédito'
+            };
+            return formas[forma] || forma || '-';
         }
     </script>
 </body>
