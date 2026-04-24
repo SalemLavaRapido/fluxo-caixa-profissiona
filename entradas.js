@@ -16,8 +16,7 @@ class EntradasSystem {
                 .from('entradas')
                 .select('*')
                 .eq('user_id', authSystem.getCurrentUserId())
-                .order('data', { ascending: false })
-                .order('id', { ascending: false });
+                .order('created_at', { ascending: false });
 
             // Aplicar filtros
             if (filtros.dataInicio) {
