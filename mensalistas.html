@@ -1124,7 +1124,7 @@
                                         <tr>
                                             <td>${formatarData(l.data_lavagem)}</td>
                                             <td><span class="badge bg-secondary">${veiculoLavagem?.placa || '-'}</span></td>
-                                            <td>${formatarTipoLavagem(l.tipo)}</td>
+                                            <td>${formatarTipoLavagem(l.tipo_lavagem)}</td>
                                             <td><strong>R$ ${(l.valor || 0).toFixed(2)}</strong></td>
                                             <td>
                                                 <button class="btn btn-danger btn-sm py-0 px-2" onclick="excluirLavagem('${l.id}', '${veiculoLavagem?.placa || ''}')" title="Excluir">
