@@ -352,7 +352,7 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" href="#tabMensalistas">
-                    <i class="fas fa-users me-2"></i>Mensalistas - Última Lavagem
+                    <i class="fas fa-list-ol me-2"></i>Fila de Lavagem
                 </a>
             </li>
         </ul>
@@ -418,17 +418,86 @@
                 </div>
             </div>
             
-            <!-- Tab Mensalistas -->
+            <!-- Tab Fila de Lavagem -->
             <div class="tab-pane fade" id="tabMensalistas">
+                <!-- Formulário Adicionar na Fila -->
+                <div class="card-nova-lavagem mb-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-plus-circle me-2"></i>Adicionar na Fila
+                    </h5>
+                    <form id="formFila" class="row g-2">
+                        <div class="col-md-2">
+                            <input type="text" class="form-control form-control-custom" id="filaPlaca" 
+                                   placeholder="PLACA" maxlength="7" style="text-transform: uppercase;" required>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control form-control-custom" id="filaModelo" 
+                                   placeholder="Modelo">
+                        </div>
+                        <div class="col-md-1">
+                            <input type="text" class="form-control form-control-custom" id="filaCor" 
+                                   placeholder="Cor">
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control form-control-custom" id="filaTipoLavagem">
+                                <option value="simples">Simples</option>
+                                <option value="completa">Completa</option>
+                                <option value="polimento">Polimento</option>
+                                <option value="higienizacao">Higienização</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <select class="form-control form-control-custom" id="filaTipoCliente">
+                                <option value="avulso">Avulso</option>
+                                <option value="mensalista">Mensalista</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <input type="number" class="form-control form-control-custom" id="filaValor" 
+                                   placeholder="R$" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control form-control-custom" id="filaObs" 
+                                   placeholder="Observação">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-registrar w-100">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Lista da Fila -->
                 <div class="card-custom p-4">
                     <h5 class="mb-3">
-                        <i class="fas fa-users me-2"></i>Veículos de Mensalistas - Última Lavagem
+                        <i class="fas fa-list-ol me-2"></i>Fila de Lavagem
+                        <span class="badge bg-warning text-dark ms-2" id="totalFila">0</span>
                     </h5>
-                    <div id="listaMensalistasLavagem">
-                        <div class="empty-state">
-                            <i class="fas fa-car"></i>
-                            <p>Nenhum veículo de mensalista cadastrado</p>
-                        </div>
+                    <div class="table-responsive table-lavagens">
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th><i class="fas fa-car me-2"></i>Placa</th>
+                                    <th><i class="fas fa-car-side me-2"></i>Modelo</th>
+                                    <th><i class="fas fa-palette me-2"></i>Cor</th>
+                                    <th><i class="fas fa-tag me-2"></i>Cliente</th>
+                                    <th><i class="fas fa-shower me-2"></i>Lavagem</th>
+                                    <th><i class="fas fa-dollar-sign me-2"></i>Valor</th>
+                                    <th><i class="fas fa-comment me-2"></i>Observação</th>
+                                    <th><i class="fas fa-cog me-2"></i>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaFila">
+                                <tr>
+                                    <td colspan="9" class="empty-state">
+                                        <i class="fas fa-car-wash"></i>
+                                        <p>Nenhum veículo na fila</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -507,6 +576,47 @@
         </div>
     </div>
 
+    <!-- Modal Pagamento Fila -->
+    <div class="modal fade" id="modalPagamentoFila" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: #1a1a2e; color: #fff;">
+                <div class="modal-header" style="background: linear-gradient(135deg, #11998e, #38ef7d); border: none;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Finalizar e Pagar
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="pagamentoFilaId">
+                    <div class="text-center mb-4">
+                        <span class="placa-badge fs-4" id="pagamentoFilaPlaca">ABC-1234</span>
+                        <p class="mt-2 mb-0" id="pagamentoFilaInfo"></p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Valor (R$)</label>
+                        <input type="number" class="form-control form-control-custom" id="pagamentoFilaValor" step="0.01" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Forma de Pagamento</label>
+                        <select class="form-control form-control-custom" id="pagamentoFilaForma">
+                            <option value="dinheiro">Dinheiro</option>
+                            <option value="pix">Pix</option>
+                            <option value="debito">Débito</option>
+                            <option value="credito">Crédito</option>
+                            <option value="cortesia">Cortesia</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success" onclick="confirmarPagamentoFila()">
+                        <i class="fas fa-check me-2"></i>Confirmar Pagamento
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Configuração Supabase
@@ -515,6 +625,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
         let lavagens = [];
+        let filaLavagem = [];
         let veiculosMensalistas = [];
         let clientes = [];
         
@@ -541,6 +652,12 @@
         document.getElementById('formLavagem').addEventListener('submit', async (e) => {
             e.preventDefault();
             await registrarLavagem();
+        });
+        
+        // Formulário da fila
+        document.getElementById('formFila').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await adicionarNaFila();
         });
         
         // Registrar lavagem
@@ -646,8 +763,17 @@
             
             veiculosMensalistas = veiculosData || [];
             
+            // Carregar fila de lavagem
+            const { data: filaData } = await supabaseClient
+                .from('fila_lavagem')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: true });
+            
+            filaLavagem = filaData || [];
+            
             renderizarLavagens();
-            renderizarMensalistasLavagem();
+            renderizarFila();
             atualizarEstatisticas();
         }
         
@@ -701,86 +827,192 @@
             `).join('');
         }
         
-        // Renderizar mensalistas com última lavagem
-        function renderizarMensalistasLavagem() {
-            const container = document.getElementById('listaMensalistasLavagem');
+        // Renderizar fila de lavagem
+        function renderizarFila() {
+            const tbody = document.getElementById('tabelaFila');
+            const total = document.getElementById('totalFila');
             
-            if (veiculosMensalistas.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-car"></i>
-                        <p>Nenhum veículo de mensalista cadastrado</p>
-                    </div>
+            total.textContent = filaLavagem.length;
+            
+            if (filaLavagem.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <i class="fas fa-car-wash"></i>
+                            <p>Nenhum veículo na fila</p>
+                        </td>
+                    </tr>
                 `;
                 return;
             }
             
-            // Para cada veículo, encontrar última lavagem
-            const veiculosComLavagem = veiculosMensalistas.map(v => {
-                const cliente = clientes.find(c => c.id === v.cliente_id);
-                const ultimaLavagem = lavagens.find(l => l.placa === v.placa);
-                
-                let diasDesdeUltimaLavagem = null;
-                let statusLavagem = 'nunca';
-                
-                if (ultimaLavagem) {
-                    const dataLavagem = new Date(ultimaLavagem.data_lavagem);
-                    const hoje = new Date();
-                    diasDesdeUltimaLavagem = Math.floor((hoje - dataLavagem) / (1000 * 60 * 60 * 24));
-                    
-                    if (diasDesdeUltimaLavagem <= 15) {
-                        statusLavagem = 'ok';
-                    } else if (diasDesdeUltimaLavagem <= 30) {
-                        statusLavagem = 'alerta';
-                    } else {
-                        statusLavagem = 'urgente';
-                    }
-                }
-                
-                return {
-                    ...v,
-                    clienteNome: cliente ? cliente.nome : 'Desconhecido',
-                    clienteTelefone: cliente ? cliente.telefone : null,
-                    ultimaLavagem: ultimaLavagem ? ultimaLavagem.data_lavagem : null,
-                    diasDesdeUltimaLavagem,
-                    statusLavagem
-                };
-            });
-            
-            // Ordenar por dias desde última lavagem (mais urgentes primeiro)
-            veiculosComLavagem.sort((a, b) => {
-                if (a.diasDesdeUltimaLavagem === null) return -1;
-                if (b.diasDesdeUltimaLavagem === null) return 1;
-                return b.diasDesdeUltimaLavagem - a.diasDesdeUltimaLavagem;
-            });
-            
-            container.innerHTML = veiculosComLavagem.map(v => `
-                <div class="mensalista-item">
-                    <div>
-                        <span class="placa-badge me-2">${v.placa}</span>
-                        <strong>${v.clienteNome}</strong>
-                        <br>
-                        <small class="text-muted">
-                            ${v.modelo || ''} ${v.cor || ''}
-                            ${v.ultimaLavagem ? ' | Última: ' + formatarData(v.ultimaLavagem) : ' | Nunca lavou'}
-                        </small>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        ${v.diasDesdeUltimaLavagem !== null ? `
-                            <span class="dias-lavagem ${v.statusLavagem === 'ok' ? 'dias-ok' : v.statusLavagem === 'alerta' ? 'dias-alerta' : 'dias-urgente'}">
-                                ${v.diasDesdeUltimaLavagem} dias
-                            </span>
-                        ` : `
-                            <span class="dias-lavagem dias-urgente">Nunca</span>
-                        `}
-                        ${v.clienteTelefone ? `
-                            <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${v.clienteTelefone}', 'Olá! Seu veículo ${v.placa} está disponível para lavagem. Quando podemos agendar?')">
-                                <i class="bi bi-whatsapp"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
+            tbody.innerHTML = filaLavagem.map((f, index) => `
+                <tr>
+                    <td><span class="badge bg-warning text-dark">${index + 1}</span></td>
+                    <td><span class="placa-badge">${f.placa}</span></td>
+                    <td>${f.modelo || '-'}</td>
+                    <td>${f.cor || '-'}</td>
+                    <td>
+                        <span class="badge-tipo ${f.tipo_cliente === 'mensalista' ? 'badge-mensalista' : 'badge-avulso'}">
+                            ${f.tipo_cliente === 'mensalista' ? 'Mensalista' : 'Avulso'}
+                        </span>
+                    </td>
+                    <td>${formatarTipoLavagem(f.tipo_lavagem)}</td>
+                    <td><strong>R$ ${(f.valor || 0).toFixed(2)}</strong></td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm" 
+                               value="${f.observacao || ''}" 
+                               onchange="atualizarObsFila('${f.id}', this.value)"
+                               style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; min-width: 100px;">
+                    </td>
+                    <td>
+                        <button class="btn btn-success btn-sm me-1" onclick="abrirModalPagamentoFila('${f.id}')" title="Finalizar e Pagar">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="removerDaFila('${f.id}')" title="Remover">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
             `).join('');
+        }
+        
+        // Adicionar na fila
+        async function adicionarNaFila() {
+            const placa = document.getElementById('filaPlaca').value.toUpperCase().trim();
+            const modelo = document.getElementById('filaModelo').value.trim();
+            const cor = document.getElementById('filaCor').value.trim();
+            const tipoLavagem = document.getElementById('filaTipoLavagem').value;
+            const tipoCliente = document.getElementById('filaTipoCliente').value;
+            const valor = parseFloat(document.getElementById('filaValor').value) || 0;
+            const observacao = document.getElementById('filaObs').value.trim();
+            
+            if (!placa) {
+                showAlert('Informe a placa!', 'warning');
+                return;
+            }
+            
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            
+            const { error } = await supabaseClient
+                .from('fila_lavagem')
+                .insert([{
+                    user_id: user.id,
+                    placa: placa,
+                    modelo: modelo || null,
+                    cor: cor || null,
+                    tipo_lavagem: tipoLavagem,
+                    tipo_cliente: tipoCliente,
+                    valor: valor,
+                    observacao: observacao || null
+                }]);
+            
+            if (error) {
+                showAlert('Erro ao adicionar: ' + error.message, 'danger');
+                return;
+            }
+            
+            document.getElementById('formFila').reset();
+            showAlert('Veículo adicionado na fila!', 'success');
+            await carregarDados();
+        }
+        
+        // Atualizar observação da fila
+        async function atualizarObsFila(filaId, observacao) {
+            await supabaseClient
+                .from('fila_lavagem')
+                .update({ observacao: observacao })
+                .eq('id', filaId);
+        }
+        
+        // Remover da fila
+        async function removerDaFila(filaId) {
+            if (!confirm('Remover este veículo da fila?')) return;
+            
+            const { error } = await supabaseClient
+                .from('fila_lavagem')
+                .delete()
+                .eq('id', filaId);
+            
+            if (error) {
+                showAlert('Erro ao remover: ' + error.message, 'danger');
+                return;
+            }
+            
+            showAlert('Removido da fila!', 'success');
+            await carregarDados();
+        }
+        
+        // Abrir modal de pagamento da fila
+        function abrirModalPagamentoFila(filaId) {
+            const item = filaLavagem.find(f => f.id === filaId);
+            if (!item) return;
+            
+            document.getElementById('pagamentoFilaId').value = item.id;
+            document.getElementById('pagamentoFilaPlaca').textContent = item.placa;
+            document.getElementById('pagamentoFilaInfo').textContent = 
+                `${item.modelo || ''} ${item.cor || ''} - ${formatarTipoLavagem(item.tipo_lavagem)}`;
+            document.getElementById('pagamentoFilaValor').value = item.valor || 0;
+            document.getElementById('pagamentoFilaForma').value = 'dinheiro';
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalPagamentoFila'));
+            modal.show();
+        }
+        
+        // Confirmar pagamento e mover para histórico
+        async function confirmarPagamentoFila() {
+            const filaId = document.getElementById('pagamentoFilaId').value;
+            const valor = parseFloat(document.getElementById('pagamentoFilaValor').value) || 0;
+            const formaPagamento = document.getElementById('pagamentoFilaForma').value;
+            
+            const item = filaLavagem.find(f => f.id === filaId);
+            if (!item) return;
+            
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            
+            // Inserir no histórico de lavagens
+            const { error: errorLavagem } = await supabaseClient
+                .from('lavagens')
+                .insert([{
+                    user_id: user.id,
+                    placa: item.placa,
+                    modelo: item.modelo,
+                    cor: item.cor,
+                    tipo_lavagem: item.tipo_lavagem,
+                    tipo_cliente: item.tipo_cliente,
+                    valor: valor,
+                    forma_pagamento: formaPagamento,
+                    data_lavagem: new Date().toISOString()
+                }]);
+            
+            if (errorLavagem) {
+                showAlert('Erro ao registrar lavagem: ' + errorLavagem.message, 'danger');
+                return;
+            }
+            
+            // Registrar no fluxo de caixa se for avulso e tiver valor
+            if (item.tipo_cliente === 'avulso' && valor > 0 && formaPagamento !== 'cortesia') {
+                await supabaseClient
+                    .from('entradas')
+                    .insert([{
+                        user_id: user.id,
+                        data: new Date().toISOString().split('T')[0],
+                        descricao: `Lavagem ${item.tipo_lavagem} - ${item.placa}`,
+                        valor: valor,
+                        categoria: 'lavagem_carro',
+                        forma_pagamento: formaPagamento
+                    }]);
+            }
+            
+            // Remover da fila
+            await supabaseClient
+                .from('fila_lavagem')
+                .delete()
+                .eq('id', filaId);
+            
+            bootstrap.Modal.getInstance(document.getElementById('modalPagamentoFila')).hide();
+            showAlert('Lavagem finalizada e registrada!', 'success');
+            await carregarDados();
         }
         
         // Atualizar estatísticas
