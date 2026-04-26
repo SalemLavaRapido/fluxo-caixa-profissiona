@@ -327,17 +327,12 @@
                            placeholder="R$" step="0.01" min="0">
                 </div>
                 <div class="col">
-                    <select class="form-control form-control-custom" id="formaPagamento">
-                        <option value="dinheiro">Dinheiro</option>
-                        <option value="pix">Pix</option>
-                        <option value="debito">Débito</option>
-                        <option value="credito">Crédito</option>
-                        <option value="cortesia">Cortesia</option>
-                    </select>
+                    <input type="text" class="form-control form-control-custom" id="obsLavagem" 
+                           placeholder="Observação">
                 </div>
-                <div class="col">
-                    <button type="submit" class="btn btn-registrar w-100">
-                        <i class="fas fa-check me-2"></i>Registrar
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-registrar">
+                        <i class="fas fa-plus me-2"></i>Adicionar na Fila
                     </button>
                 </div>
             </form>
@@ -420,54 +415,6 @@
             
             <!-- Tab Fila de Lavagem -->
             <div class="tab-pane fade" id="tabMensalistas">
-                <!-- Formulário Adicionar na Fila -->
-                <div class="card-nova-lavagem mb-4">
-                    <h5 class="mb-3">
-                        <i class="fas fa-plus-circle me-2"></i>Adicionar na Fila
-                    </h5>
-                    <form id="formFila" class="row g-2">
-                        <div class="col-md-2">
-                            <input type="text" class="form-control form-control-custom" id="filaPlaca" 
-                                   placeholder="PLACA" maxlength="7" style="text-transform: uppercase;" required>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="text" class="form-control form-control-custom" id="filaModelo" 
-                                   placeholder="Modelo">
-                        </div>
-                        <div class="col-md-1">
-                            <input type="text" class="form-control form-control-custom" id="filaCor" 
-                                   placeholder="Cor">
-                        </div>
-                        <div class="col-md-2">
-                            <select class="form-control form-control-custom" id="filaTipoLavagem">
-                                <option value="simples">Simples</option>
-                                <option value="completa">Completa</option>
-                                <option value="polimento">Polimento</option>
-                                <option value="higienizacao">Higienização</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <select class="form-control form-control-custom" id="filaTipoCliente">
-                                <option value="avulso">Avulso</option>
-                                <option value="mensalista">Mensalista</option>
-                            </select>
-                        </div>
-                        <div class="col-md-1">
-                            <input type="number" class="form-control form-control-custom" id="filaValor" 
-                                   placeholder="R$" step="0.01" min="0">
-                        </div>
-                        <div class="col-md-2">
-                            <input type="text" class="form-control form-control-custom" id="filaObs" 
-                                   placeholder="Observação">
-                        </div>
-                        <div class="col-md-1">
-                            <button type="submit" class="btn btn-registrar w-100">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
                 <!-- Lista da Fila -->
                 <div class="card-custom p-4">
                     <h5 class="mb-3">
@@ -654,13 +601,7 @@
             await registrarLavagem();
         });
         
-        // Formulário da fila
-        document.getElementById('formFila').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await adicionarNaFila();
-        });
-        
-        // Registrar lavagem
+        // Registrar lavagem (adiciona na fila)
         async function registrarLavagem() {
             const placa = document.getElementById('placaLavagem').value.toUpperCase().trim();
             const modelo = document.getElementById('modeloLavagem').value.trim();
@@ -668,7 +609,7 @@
             const tipoLavagem = document.getElementById('tipoLavagem').value;
             const tipoCliente = document.getElementById('tipoCliente').value;
             const valor = parseFloat(document.getElementById('valorLavagem').value) || 0;
-            const formaPagamento = document.getElementById('formaPagamento').value;
+            const observacao = document.getElementById('obsLavagem').value.trim();
             
             if (!placa) {
                 showAlert('Informe a placa do veículo!', 'warning');
@@ -677,9 +618,9 @@
             
             const user = JSON.parse(localStorage.getItem('currentUser'));
             
-            // Registrar lavagem
+            // Adicionar na fila de lavagem
             const { error } = await supabaseClient
-                .from('lavagens')
+                .from('fila_lavagem')
                 .insert([{
                     user_id: user.id,
                     placa: placa,
@@ -688,30 +629,15 @@
                     tipo_lavagem: tipoLavagem,
                     tipo_cliente: tipoCliente,
                     valor: valor,
-                    forma_pagamento: formaPagamento,
-                    data_lavagem: new Date().toISOString()
+                    observacao: observacao || null
                 }]);
             
             if (error) {
-                showAlert('Erro ao registrar: ' + error.message, 'danger');
+                showAlert('Erro ao adicionar na fila: ' + error.message, 'danger');
                 return;
             }
             
-            // Se for avulso e tiver valor, registrar no fluxo de caixa
-            if (tipoCliente === 'avulso' && valor > 0 && formaPagamento !== 'cortesia') {
-                await supabaseClient
-                    .from('entradas')
-                    .insert([{
-                        user_id: user.id,
-                        data: new Date().toISOString().split('T')[0],
-                        descricao: `Lavagem ${tipoLavagem} - ${placa}`,
-                        categoria: 'lavagem',
-                        forma_pagamento: formaPagamento,
-                        valor: valor
-                    }]);
-            }
-            
-            showAlert(`Lavagem registrada: ${placa} - ${tipoLavagem}`, 'success');
+            showAlert(`${placa} adicionado na fila!`, 'success');
             document.getElementById('formLavagem').reset();
             
             await carregarDados();
@@ -875,46 +801,6 @@
                     </td>
                 </tr>
             `).join('');
-        }
-        
-        // Adicionar na fila
-        async function adicionarNaFila() {
-            const placa = document.getElementById('filaPlaca').value.toUpperCase().trim();
-            const modelo = document.getElementById('filaModelo').value.trim();
-            const cor = document.getElementById('filaCor').value.trim();
-            const tipoLavagem = document.getElementById('filaTipoLavagem').value;
-            const tipoCliente = document.getElementById('filaTipoCliente').value;
-            const valor = parseFloat(document.getElementById('filaValor').value) || 0;
-            const observacao = document.getElementById('filaObs').value.trim();
-            
-            if (!placa) {
-                showAlert('Informe a placa!', 'warning');
-                return;
-            }
-            
-            const user = JSON.parse(localStorage.getItem('currentUser'));
-            
-            const { error } = await supabaseClient
-                .from('fila_lavagem')
-                .insert([{
-                    user_id: user.id,
-                    placa: placa,
-                    modelo: modelo || null,
-                    cor: cor || null,
-                    tipo_lavagem: tipoLavagem,
-                    tipo_cliente: tipoCliente,
-                    valor: valor,
-                    observacao: observacao || null
-                }]);
-            
-            if (error) {
-                showAlert('Erro ao adicionar: ' + error.message, 'danger');
-                return;
-            }
-            
-            document.getElementById('formFila').reset();
-            showAlert('Veículo adicionado na fila!', 'success');
-            await carregarDados();
         }
         
         // Atualizar observação da fila
