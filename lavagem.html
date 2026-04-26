@@ -401,12 +401,13 @@
                                     <th><i class="fas fa-calendar me-2"></i>Data/Hora</th>
                                     <th><i class="fas fa-dollar-sign me-2"></i>Valor</th>
                                     <th><i class="fas fa-credit-card me-2"></i>Pagamento</th>
+                                    <th><i class="fas fa-phone me-2"></i>Celular</th>
                                     <th><i class="fas fa-cog me-2"></i>Ações</th>
                                 </tr>
                             </thead>
                             <tbody id="tabelaLavagens">
                                 <tr>
-                                    <td colspan="9" class="empty-state">
+                                    <td colspan="10" class="empty-state">
                                             <i class="fas fa-car-wash"></i>
                                             <p>Nenhuma lavagem registrada</p>
                                         </td>
@@ -796,7 +797,7 @@
             if (lavagens.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="10" class="empty-state">
                             <i class="fas fa-car-wash"></i>
                             <p>Nenhuma lavagem encontrada</p>
                         </td>
@@ -819,6 +820,13 @@
                     <td>${formatarDataHora(l.data_lavagem)}</td>
                     <td><strong>R$ ${(l.valor || 0).toFixed(2)}</strong></td>
                     <td>${formatarFormaPagamento(l.forma_pagamento)}</td>
+                    <td>
+                        ${l.celular ? `
+                            <button class="btn btn-success btn-sm" onclick="abrirWhatsApp('${l.celular}', 'Olá!')" title="WhatsApp">
+                                <i class="fab fa-whatsapp"></i>
+                            </button>
+                        ` : '-'}
+                    </td>
                     <td>
                         <button class="btn btn-warning btn-sm me-1" onclick="abrirModalEditarLavagem('${l.id}')" title="Editar">
                             <i class="fas fa-edit"></i>
@@ -851,7 +859,7 @@
             }
             
             tbody.innerHTML = filaLavagem.map((f, index) => `
-                <tr class="${f.lavado ? 'table-success' : ''}">
+                <tr style="${f.lavado ? 'background: linear-gradient(135deg, #11998e, #38ef7d) !important;' : ''}">
                     <td><span class="badge ${f.lavado ? 'bg-success' : 'bg-warning text-dark'}">${index + 1}</span></td>
                     <td><span class="placa-badge">${f.placa}</span></td>
                     <td>${f.modelo || '-'}</td>
@@ -1041,6 +1049,7 @@
                     tipo_cliente: item.tipo_cliente,
                     valor: valor,
                     forma_pagamento: formaPagamento,
+                    celular: item.celular,
                     data_lavagem: new Date().toISOString()
                 }]);
             
