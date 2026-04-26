@@ -613,6 +613,55 @@
         </div>
     </div>
 
+    <!-- Modal Editar Cliente -->
+    <div class="modal fade modal-custom" id="modalEditarCliente" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>Editar Cliente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editarClienteId">
+                    <div class="mb-3">
+                        <label class="form-label">Nome</label>
+                        <input type="text" class="form-control form-control-custom" id="editarClienteNome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefone</label>
+                        <input type="tel" class="form-control form-control-custom" id="editarClienteTelefone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Empresa</label>
+                        <input type="text" class="form-control form-control-custom" id="editarClienteEmpresa" placeholder="(opcional)">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Valor Mensal (R$)</label>
+                            <input type="number" class="form-control form-control-custom" id="editarClienteValor" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Dia Vencimento</label>
+                            <input type="number" class="form-control form-control-custom" id="editarClienteVencimento" min="1" max="31">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Observação</label>
+                        <textarea class="form-control form-control-custom" id="editarClienteObservacao" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="salvarEdicaoCliente()">
+                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Histórico de Lavagens -->
     <div class="modal fade modal-custom" id="modalHistoricoLavagens" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -865,6 +914,9 @@
                                 <button class="btn btn-pagamento btn-sm" onclick="abrirModalPagamento('${cliente.id}', '${cliente.nome}', ${cliente.valor_mensal})">
                                     <i class="fas fa-dollar-sign me-1"></i>Pagamento
                                 </button>
+                                <button class="btn btn-warning btn-sm" onclick="abrirModalEditarCliente('${cliente.id}')" title="Editar Cliente">
+                                    <i class="fas fa-edit"></i>
+                                </button>
                                 <button class="btn btn-danger btn-sm" onclick="excluirCliente('${cliente.id}', '${cliente.nome}')" title="Excluir Cliente">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -1089,6 +1141,60 @@
                 console.error('Erro ao excluir cliente:', error);
                 showAlert('Erro ao excluir cliente', 'danger');
             }
+        }
+        
+        // Abrir modal de edição do cliente
+        function abrirModalEditarCliente(clienteId) {
+            const cliente = clientes.find(c => c.id === clienteId);
+            if (!cliente) return;
+            
+            document.getElementById('editarClienteId').value = cliente.id;
+            document.getElementById('editarClienteNome').value = cliente.nome || '';
+            document.getElementById('editarClienteTelefone').value = cliente.telefone || '';
+            document.getElementById('editarClienteEmpresa').value = cliente.empresa || '';
+            document.getElementById('editarClienteValor').value = cliente.valor_mensal || 0;
+            document.getElementById('editarClienteVencimento').value = cliente.dia_vencimento || 10;
+            document.getElementById('editarClienteObservacao').value = cliente.observacao || '';
+            
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarCliente'));
+            modal.show();
+        }
+        
+        // Salvar edição do cliente
+        async function salvarEdicaoCliente() {
+            const clienteId = document.getElementById('editarClienteId').value;
+            const nome = document.getElementById('editarClienteNome').value.trim();
+            const telefone = document.getElementById('editarClienteTelefone').value.replace(/\D/g, '');
+            const empresa = document.getElementById('editarClienteEmpresa').value.trim();
+            const valor = parseFloat(document.getElementById('editarClienteValor').value) || 0;
+            const vencimento = parseInt(document.getElementById('editarClienteVencimento').value) || 10;
+            const observacao = document.getElementById('editarClienteObservacao').value.trim();
+            
+            if (!nome || !telefone) {
+                showAlert('Preencha nome e telefone!', 'warning');
+                return;
+            }
+            
+            const { error } = await supabaseClient
+                .from('clientes_estacionamento')
+                .update({
+                    nome: nome,
+                    telefone: telefone,
+                    empresa: empresa,
+                    valor_mensal: valor,
+                    dia_vencimento: vencimento,
+                    observacao: observacao
+                })
+                .eq('id', clienteId);
+            
+            if (error) {
+                showAlert('Erro ao salvar: ' + error.message, 'danger');
+                return;
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente')).hide();
+            showAlert('Cliente atualizado com sucesso!', 'success');
+            await carregarDados();
         }
         
         // Abrir modal de histórico de lavagens
