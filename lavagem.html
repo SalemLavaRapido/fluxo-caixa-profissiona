@@ -859,7 +859,7 @@
             }
             
             tbody.innerHTML = filaLavagem.map((f, index) => `
-                <tr style="${f.lavado ? 'background: #0a0a23 !important; color: #fff;' : ''}">
+                <tr style="${f.lavado ? 'background: #000000 !important;' : ''}">
                     <td><span class="badge ${f.lavado ? 'bg-primary' : 'bg-warning text-dark'}">${index + 1}</span></td>
                     <td><span class="placa-badge">${f.placa}</span></td>
                     <td>${f.modelo || '-'}</td>
