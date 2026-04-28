@@ -429,7 +429,7 @@
                 </div>
                 <div class="col-md-2">
                     <input type="date" class="form-control form-control-custom" id="clienteVencimento" 
-                           title="Data de Vencimento">
+                           title="Data do primeiro vencimento">
                 </div>
                 <div class="col-md-2">
                     <input type="text" class="form-control form-control-custom" id="clienteObservacao" 
@@ -906,7 +906,29 @@
                                 </div>
                                 <div class="cliente-info-item">
                                     <i class="fas fa-calendar"></i>
-                                    Venc. <strong>${cliente.data_vencimento ? new Date(cliente.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR') : (cliente.dia_vencimento ? 'Dia ' + cliente.dia_vencimento : 'Não definido')}</strong>
+                                    Venc. <strong>${(() => {
+                                        if (cliente.data_vencimento) {
+                                            const dataOriginal = new Date(cliente.data_vencimento + 'T00:00:00');
+                                            const dia = dataOriginal.getDate();
+                                            const hoje = new Date();
+                                            const mesAtual = hoje.getMonth();
+                                            const anoAtual = hoje.getFullYear();
+                                            
+                                            // Se a data original ainda não passou, mostra ela
+                                            if (dataOriginal >= hoje) {
+                                                return dataOriginal.toLocaleDateString('pt-BR');
+                                            }
+                                            // Senão, mostra o próximo vencimento (dia X do mês atual ou próximo)
+                                            let proxVenc = new Date(anoAtual, mesAtual, dia);
+                                            if (proxVenc < hoje) {
+                                                proxVenc = new Date(anoAtual, mesAtual + 1, dia);
+                                            }
+                                            return proxVenc.toLocaleDateString('pt-BR');
+                                        } else if (cliente.dia_vencimento) {
+                                            return 'Dia ' + cliente.dia_vencimento;
+                                        }
+                                        return 'Não definido';
+                                    })()}</strong>
                                 </div>
                                 <div class="cliente-info-item">
                                     <i class="fas fa-car"></i>
@@ -1477,15 +1499,26 @@
             clientes.forEach(cliente => {
                 let dataVencimento;
                 let dataFormatada;
+                let diaVencimento;
                 
                 // Verificar se tem data_vencimento (novo) ou dia_vencimento (antigo)
                 if (cliente.data_vencimento) {
-                    dataVencimento = new Date(cliente.data_vencimento + 'T00:00:00');
+                    const dataOriginal = new Date(cliente.data_vencimento + 'T00:00:00');
+                    diaVencimento = dataOriginal.getDate();
+                    
+                    // Se a data original ainda não passou, usa ela
+                    if (dataOriginal >= hoje) {
+                        dataVencimento = dataOriginal;
+                    } else {
+                        // Calcular vencimento do mês atual usando o dia
+                        dataVencimento = new Date(anoAtual, mesAtual, diaVencimento);
+                    }
                     dataFormatada = dataVencimento.toLocaleDateString('pt-BR');
                 } else if (cliente.dia_vencimento) {
                     // Usar dia_vencimento no mês atual
-                    dataVencimento = new Date(anoAtual, mesAtual, cliente.dia_vencimento);
-                    dataFormatada = `Dia ${cliente.dia_vencimento}`;
+                    diaVencimento = cliente.dia_vencimento;
+                    dataVencimento = new Date(anoAtual, mesAtual, diaVencimento);
+                    dataFormatada = `Dia ${diaVencimento}`;
                 } else {
                     return; // Sem vencimento definido
                 }
