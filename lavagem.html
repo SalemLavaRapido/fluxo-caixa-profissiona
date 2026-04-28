@@ -284,6 +284,23 @@
             border-radius: 15px;
             font-size: 0.85em;
         }
+        
+        .stats-card-alerta {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stats-card-alerta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255,107,107,0.4);
+        }
     </style>
 </head>
 <body>
@@ -333,11 +350,18 @@
                     <div>Este Mês</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="stats-card">
                     <i class="fas fa-dollar-sign fa-2x mb-2" style="color: #4facfe;"></i>
                     <div class="stats-number" id="faturamentoMes">R$ 0</div>
                     <div>Faturamento Mês</div>
+                </div>
+            </div>
+            <div class="col-md-2" id="cardAlertaContainer" style="display: none;">
+                <div class="stats-card-alerta" onclick="toggleAlertasLavagem()">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <div class="stats-number" id="alertasLavagemCount">0</div>
+                    <div>+30 dias sem Lavar</div>
                 </div>
             </div>
         </div>
@@ -1384,13 +1408,18 @@
             const secao = document.getElementById('secaoAlertasLavagem');
             const lista = document.getElementById('listaAlertasLavagem');
             const total = document.getElementById('totalAlertasLavagem');
+            const cardContainer = document.getElementById('cardAlertaContainer');
+            const cardCount = document.getElementById('alertasLavagemCount');
             
             if (alertas.length === 0) {
                 secao.style.display = 'none';
+                cardContainer.style.display = 'none';
                 return;
             }
             
-            secao.style.display = 'block';
+            // Mostrar o card de alerta
+            cardContainer.style.display = 'block';
+            cardCount.textContent = alertas.length;
             total.textContent = alertas.length;
             
             lista.innerHTML = alertas.map(a => `
@@ -1412,6 +1441,18 @@
                     ` : ''}
                 </div>
             `).join('');
+        }
+        
+        // Toggle seção de alertas de lavagem
+        function toggleAlertasLavagem() {
+            const secao = document.getElementById('secaoAlertasLavagem');
+            if (secao.style.display === 'none' || secao.style.display === '') {
+                secao.style.display = 'block';
+                // Scroll suave até a seção
+                secao.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                secao.style.display = 'none';
+            }
         }
         
         // Abrir WhatsApp para lembrete de lavagem
