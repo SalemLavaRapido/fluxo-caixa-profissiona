@@ -1701,81 +1701,157 @@
             }, 5000);
         }
         
-        // Imprimir recibo de mensalista
+        // Imprimir cupom fiscal térmico de mensalista - 48mm
         function imprimirReciboMensalista(clienteId, clienteNome, valorMensal) {
             const dataAtual = new Date().toLocaleDateString('pt-BR');
             const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             const mesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             
-            // Buscar veículos do cliente
-            const veiculosCliente = veiculos.filter(v => v.cliente_id === clienteId);
-            const placasVeiculos = veiculosCliente.map(v => v.placa).join(', ') || 'Nenhum veículo cadastrado';
+            // Gerar número do comprovante
+            const numeroComprovante = 'MC' + Date.now().toString().slice(-6);
             
-            // Criar conteúdo do recibo (mesmo modelo do avulso)
-            const reciboContent = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto;">
-                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
-                        <h2 style="margin: 0; color: #333;">RECIBO DE MENSALIDADE</h2>
-                        <p style="margin: 5px 0; color: #666;">Sa Lavagem e Estacionamento</p>
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
-                        <p style="margin: 5px 0;"><strong>Data:</strong> ${dataAtual} - ${horaAtual}</p>
-                        <p style="margin: 5px 0;"><strong>Cliente:</strong> ${clienteNome}</p>
-                        <p style="margin: 5px 0;"><strong>Descrição:</strong> Mensalidade Estacionamento</p>
-                        <p style="margin: 5px 0;"><strong>Período:</strong> ${mesAtual}</p>
-                        <p style="margin: 5px 0;"><strong>Veículos:</strong> ${placasVeiculos}</p>
-                    </div>
-                    
-                    <div style="border: 2px solid #333; padding: 15px; margin-bottom: 20px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 18px; font-weight: bold;">VALOR:</span>
-                            <span style="font-size: 24px; font-weight: bold; color: #333;">R$ ${parseFloat(valorMensal).toFixed(2)}</span>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin-top: 30px;">
-                        <div style="border-top: 1px solid #999; padding-top: 10px; margin-bottom: 20px;">
-                            <p style="margin: 0; font-size: 12px; color: #666;">Assinatura do Cliente</p>
-                            <div style="height: 40px; border-bottom: 1px solid #999; margin-top: 20px;"></div>
-                        </div>
-                        
-                        <div style="margin-top: 30px;">
-                            <p style="margin: 0; font-size: 10px; color: #999;">
-                                * Recibo válido para comprovação de pagamento<br>
-                                * Não duplicável sem assinatura
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            // Buscar dados do cliente
+            const cliente = clientes.find(c => c.id === clienteId);
+            const veiculosCliente = veiculos.filter(v => v.cliente_id === clienteId);
+            const veiculoPrincipal = veiculosCliente[0] || {};
+            
+            // Verificar status de pagamento
+            const ultimoPagamento = pagamentos.filter(p => p.cliente_id === clienteId).sort((a, b) => new Date(b.data_pagamento) - new Date(a.data_pagamento))[0];
+            const statusPagamento = ultimoPagamento ? 'PAGO' : 'PENDENTE';
+            const statusAcesso = statusPagamento === 'PAGO' ? 'ACESSO LIBERADO' : 'PAGAMENTO PENDENTE';
+            
+            // Data de vencimento
+            const dataVencimento = cliente?.data_vencimento ? new Date(cliente.data_vencimento).toLocaleDateString('pt-BR') : new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR');
+            
+            // Criar conteúdo do cupom térmico 48mm
+            const cupomContent = `
+<div style="font-family: 'Courier New', Courier, monospace; font-size: 10px; width: 170px; margin: 0 auto; padding: 5px; background: white; color: black; line-height: 1.2;">
+
+<div style="text-align: center; margin-bottom: 8px;">
+<div style="font-size: 11px; font-weight: bold;">SALEM ESTACIONAMENTO</div>
+<div style="font-size: 8px;">Rua Mariana Junqueira, 1024</div>
+<div style="font-size: 8px;">Centro - RP</div>
+<div style="font-size: 8px;">Tel: (16) 99395-3720</div>
+<div style="font-size: 8px;">CNPJ: 63.992.071/0001-38</div>
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="text-align: center; font-weight: bold; font-size: 10px; margin-bottom: 5px;">
+COMPROVANTE DE MENSALISTA
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="font-size: 9px; margin-bottom: 5px;">
+Nº: ${numeroComprovante}<br>
+${dataAtual} ${horaAtual}
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="font-size: 9px;">
+<div style="font-weight: bold; margin-bottom: 3px;">CLIENTE:</div>
+<div style="font-size: 10px; font-weight: bold;">${clienteNome.toUpperCase()}</div>
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="text-align: center; font-size: 14px; font-weight: bold; letter-spacing: 2px; margin: 8px 0;">
+${veiculoPrincipal.placa ? veiculoPrincipal.placa.toUpperCase() : 'N/A'}
+</div>
+
+<div style="font-size: 9px;">
+MODELO: ${veiculoPrincipal.modelo || 'N/A'}<br>
+PLANO: MENSAL COMPLETO<br>
+VALOR: R$ ${parseFloat(valorMensal).toFixed(2)}<br>
+STATUS: ${statusPagamento}<br>
+VENCIMENTO: ${dataVencimento}<br>
+ENTRADA: ${dataAtual} ${horaAtual}<br>
+VAGA: MENSALISTA
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="text-align: center; font-size: 12px; font-weight: bold; padding: 5px; border: 1px solid black; margin: 8px 0;">
+${statusAcesso}
+</div>
+
+<div style="text-align: center; font-size: 10px; font-weight: bold;">
+*** MENSALISTA ***
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="text-align: center; font-size: 7px; margin-top: 5px;">
+GUARDE ESTE COMPROVANTE<br>
+Mensalista: acesso conforme<br>
+plano contratado.<br>
+Nao nos responsabilizamos por<br>
+objetos deixados no veiculo.<br>
+Obrigado pela preferencia!
+</div>
+
+<div style="text-align: center; margin: 5px 0;">--------------------------------</div>
+
+<div style="text-align: center; font-size: 7px;">
+${dataAtual} ${horaAtual}
+</div>
+
+</div>
             `;
             
-            // Abrir janela de impressão
+            // Abrir janela de impressão com configuração térmica 48mm
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Recibo de Mensalidade - ${clienteNome}</title>
+                    <title>Cupom - ${clienteNome}</title>
                     <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: 'Courier New', Courier, monospace;
+                            background: white;
+                            margin: 0;
+                            padding: 0;
+                        }
                         @media print {
-                            body { margin: 0; }
-                            @page { margin: 10mm; }
+                            @page {
+                                size: 48mm auto;
+                                margin: 0;
+                            }
+                            body {
+                                width: 48mm;
+                                margin: 0;
+                                padding: 2mm;
+                            }
                         }
                     </style>
                 </head>
                 <body>
-                    ${reciboContent}
+                    ${cupomContent}
                     <scr` + `ipt>
                         window.onload = function() {
-                            window.print();
-                            window.close();
+                            setTimeout(function() {
+                                window.print();
+                                window.close();
+                            }, 200);
                         }
                     </scr` + `ipt>
                 </body>
                 </html>
             `);
             printWindow.document.close();
+        }
+        
+        // Função alternativa para impressão rápida
+        function imprimirCupomRapido(clienteId, clienteNome, valorMensal) {
+            imprimirReciboMensalista(clienteId, clienteNome, valorMensal);
         }
         
         // Logout
