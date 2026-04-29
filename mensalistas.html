@@ -375,32 +375,25 @@
         
         <!-- Stats Cards -->
         <div class="row mb-4">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stats-card">
                     <i class="fas fa-users fa-2x mb-2" style="color: #667eea;"></i>
                     <div class="stats-number" id="totalClientes">0</div>
                     <div>Clientes Ativos</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stats-card">
-                    <i class="fas fa-car fa-2x mb-2" style="color: #38ef7d;"></i>
-                    <div class="stats-number" id="totalVeiculos">0</div>
-                    <div>Veículos</div>
+                    <i class="fas fa-credit-card fa-2x mb-2" style="color: #38ef7d;"></i>
+                    <div class="stats-number" id="mensalidadesAtivas">0</div>
+                    <div>Mensalidades Ativas</div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stats-card">
-                    <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f45c43;"></i>
-                    <div class="stats-number" id="alertasLavagem">0</div>
-                    <div>Alertas Lavagem</div>
-                </div>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="stats-card">
                     <i class="fas fa-dollar-sign fa-2x mb-2" style="color: #4facfe;"></i>
-                    <div class="stats-number" id="receitaMensal">R$ 0</div>
-                    <div>Receita Mensal</div>
+                    <div class="stats-number" id="faturamentoMensal">R$ 0</div>
+                    <div>Faturamento Mensal</div>
                 </div>
             </div>
         </div>
@@ -946,26 +939,13 @@
                                 </div>
                                 
                                 ${veiculosCliente.map(v => {
-                                    const ultimaLavagem = getUltimaLavagem(v.id);
-                                    const diasSemLavar = ultimaLavagem ? calcularDiasSemLavar(ultimaLavagem.data_lavagem) : 999;
-                                    const alertaLavagem = diasSemLavar > 30;
-                                    
                                     return `
                                         <div class="veiculo-card">
                                             <div class="veiculo-info">
                                                 <span class="placa-badge">${v.placa}</span>
                                                 <span>${v.modelo || ''} ${v.cor || ''}</span>
-                                                ${alertaLavagem ? 
-                                                    `<span class="lavagem-alerta"><i class="fas fa-exclamation-triangle me-1"></i>${diasSemLavar === 999 ? 'Nunca lavou' : diasSemLavar + ' dias'}</span>` :
-                                                    `<span class="lavagem-ok"><i class="fas fa-check me-1"></i>${diasSemLavar} dias</span>`
-                                                }
                                             </div>
                                             <div class="d-flex gap-2">
-                                                ${alertaLavagem && cliente.telefone ? `
-                                                    <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsApp('${cliente.telefone}', 'Olá ${cliente.nome}! Seu veículo ${v.placa} já faz mais de 30 dias sem lavagem. Temos promoção especial hoje 🚗✨')">
-                                                        <i class="bi bi-whatsapp"></i>
-                                                    </button>
-                                                ` : ''}
                                                 <button class="btn btn-danger btn-sm" onclick="excluirVeiculo('${v.id}', '${v.placa}')" title="Excluir Veículo">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
