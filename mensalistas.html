@@ -1531,39 +1531,56 @@
             }
             
             const user = JSON.parse(localStorage.getItem('currentUser'));
-            
-            // Salvar pagamento
-            const { error: errorPag } = await supabaseClient
-                .from('pagamentos_mensalidade')
-                .insert([{
-                    cliente_id: clienteId,
-                    user_id: user.id,
-                    mes_referencia: mes,
-                    valor: valor,
-                    forma_pagamento: forma
-                }]);
-            
-            if (errorPag) {
-                showAlert('Erro ao salvar: ' + errorPag.message, 'danger');
+            if (!user) {
+                showAlert('Usuário não logado!', 'danger');
                 return;
             }
             
-            // Registrar no fluxo de caixa
-            await supabaseClient
-                .from('entradas')
-                .insert([{
-                    user_id: user.id,
-                    data: new Date().toISOString().split('T')[0],
-                    descricao: `Mensalidade ${mes} - ${clienteNome}`,
-                    categoria: 'mensalista',
-                    forma_pagamento: forma,
-                    valor: valor
-                }]);
-            
-            bootstrap.Modal.getInstance(document.getElementById('modalPagamento')).hide();
-            showAlert(`Pagamento registrado: ${clienteNome} - R$ ${valor.toFixed(2)}`, 'success');
-            
-            await carregarDados();
+            try {
+                // Salvar pagamento
+                const { data: pagamentoData, error: errorPag } = await supabaseClient
+                    .from('pagamentos_mensalidade')
+                    .insert([{
+                        cliente_id: clienteId,
+                        user_id: user.id,
+                        mes_referencia: mes,
+                        valor_pago: valor,
+                        data_pagamento: new Date().toISOString(),
+                        forma_pagamento: forma,
+                        status: 'pago'
+                    }])
+                    .select();
+                
+                if (errorPag) {
+                    console.error('Erro ao salvar pagamento:', errorPag);
+                    showAlert('Erro ao salvar: ' + errorPag.message, 'danger');
+                    return;
+                }
+                
+                // Registrar no fluxo de caixa
+                const { error: errorEntrada } = await supabaseClient
+                    .from('entradas')
+                    .insert([{
+                        user_id: user.id,
+                        data: new Date().toISOString().split('T')[0],
+                        descricao: `Mensalidade ${mes} - ${clienteNome}`,
+                        categoria: 'mensalista',
+                        forma_pagamento: forma,
+                        valor: valor
+                    }]);
+                
+                if (errorEntrada) {
+                    console.error('Erro ao registrar entrada:', errorEntrada);
+                }
+                
+                bootstrap.Modal.getInstance(document.getElementById('modalPagamento')).hide();
+                showAlert(`Pagamento registrado: ${clienteNome} - R$ ${valor.toFixed(2)}`, 'success');
+                
+                await carregarDados();
+            } catch (err) {
+                console.error('Erro geral:', err);
+                showAlert('Erro ao processar pagamento: ' + err.message, 'danger');
+            }
         }
         
         // Verificar alertas de pagamento
@@ -1715,13 +1732,42 @@
             const veiculosCliente = veiculos.filter(v => v.cliente_id === clienteId);
             const veiculoPrincipal = veiculosCliente[0] || {};
             
-            // Verificar status de pagamento
-            const ultimoPagamento = pagamentos.filter(p => p.cliente_id === clienteId).sort((a, b) => new Date(b.data_pagamento) - new Date(a.data_pagamento))[0];
-            const statusPagamento = ultimoPagamento ? 'PAGO' : 'PENDENTE';
-            const statusAcesso = statusPagamento === 'PAGO' ? 'ACESSO LIBERADO' : 'PAGAMENTO PENDENTE';
+            // Calcular data de vencimento (mesma lógica do card)
+            let dataVencimentoFormatada = 'Não definido';
+            if (cliente?.data_vencimento) {
+                const dataOriginal = new Date(cliente.data_vencimento + 'T00:00:00');
+                const dia = dataOriginal.getDate();
+                const hoje = new Date();
+                const mesAtual = hoje.getMonth();
+                const anoAtual = hoje.getFullYear();
+                
+                // Se a data original ainda não passou, mostra ela
+                if (dataOriginal >= hoje) {
+                    dataVencimentoFormatada = dataOriginal.toLocaleDateString('pt-BR');
+                } else {
+                    // Senão, mostra o próximo vencimento (dia X do mês atual ou próximo)
+                    let proxVenc = new Date(anoAtual, mesAtual, dia);
+                    if (proxVenc < hoje) {
+                        proxVenc = new Date(anoAtual, mesAtual + 1, dia);
+                    }
+                    dataVencimentoFormatada = proxVenc.toLocaleDateString('pt-BR');
+                }
+            } else if (cliente?.dia_vencimento) {
+                dataVencimentoFormatada = 'Dia ' + cliente.dia_vencimento;
+            }
             
-            // Data de vencimento
-            const dataVencimento = cliente?.data_vencimento ? new Date(cliente.data_vencimento).toLocaleDateString('pt-BR') : new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('pt-BR');
+            // Verificar status de pagamento baseado no último pagamento do mês atual
+            const hoje = new Date();
+            const mesAtual = hoje.getMonth();
+            const anoAtual = hoje.getFullYear();
+            const pagamentosCliente = pagamentos.filter(p => p.cliente_id === clienteId);
+            const pagamentoMesAtual = pagamentosCliente.find(p => {
+                const dataPag = new Date(p.data_pagamento);
+                return dataPag.getMonth() === mesAtual && dataPag.getFullYear() === anoAtual;
+            });
+            
+            const statusPagamento = pagamentoMesAtual ? 'PAGO' : 'PENDENTE';
+            const statusAcesso = statusPagamento === 'PAGO' ? 'ACESSO LIBERADO' : 'PAGAMENTO PENDENTE';
             
             // Criar conteúdo do cupom térmico 48mm
             const cupomContent = `
@@ -1766,7 +1812,7 @@ MODELO: ${veiculoPrincipal.modelo || 'N/A'}<br>
 PLANO: MENSAL COMPLETO<br>
 VALOR: R$ ${parseFloat(valorMensal).toFixed(2)}<br>
 STATUS: ${statusPagamento}<br>
-VENCIMENTO: ${dataVencimento}<br>
+VENCIMENTO: ${dataVencimentoFormatada}<br>
 ENTRADA: ${dataAtual} ${horaAtual}<br>
 VAGA: MENSALISTA
 </div>
