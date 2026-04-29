@@ -732,22 +732,27 @@
             const user = JSON.parse(localStorage.getItem('currentUser'));
             if (!user) return;
             
-            // Carregar clientes
-            const { data: clientesData } = await supabaseClient
+            // Carregar clientes (sem filtro de status para não sumir dados)
+            const { data: clientesData, error: errorClientes } = await supabaseClient
                 .from('clientes_estacionamento')
                 .select('*')
                 .eq('user_id', user.id)
-                .eq('status', 'ativo')
+                .neq('status', 'excluido')
                 .order('nome');
             
+            if (errorClientes) {
+                console.error('Erro ao carregar clientes:', errorClientes);
+                showAlert('Erro ao carregar clientes: ' + errorClientes.message, 'danger');
+            }
             clientes = clientesData || [];
             
             // Carregar veículos
-            const { data: veiculosData } = await supabaseClient
+            const { data: veiculosData, error: errorVeiculos } = await supabaseClient
                 .from('veiculos')
                 .select('*')
                 .eq('user_id', user.id);
             
+            if (errorVeiculos) console.error('Erro ao carregar veículos:', errorVeiculos);
             veiculos = veiculosData || [];
             
             // Carregar lavagens (últimos 60 dias)
@@ -1085,10 +1090,10 @@
                     .delete()
                     .eq('cliente_id', clienteId);
                 
-                // Excluir cliente (soft delete - muda status)
+                // Excluir cliente (soft delete - muda status para excluido)
                 const { error } = await supabaseClient
                     .from('clientes_estacionamento')
-                    .update({ status: 'inativo' })
+                    .update({ status: 'excluido' })
                     .eq('id', clienteId);
                 
                 if (error) {
@@ -1722,7 +1727,7 @@
         function imprimirReciboMensalista(clienteId, clienteNome, valorMensal) {
             const dataAtual = new Date().toLocaleDateString('pt-BR');
             const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            const mesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+            const mesAtualTexto = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             
             // Gerar número do comprovante
             const numeroComprovante = 'MC' + Date.now().toString().slice(-6);
@@ -1738,7 +1743,7 @@
                 const dataOriginal = new Date(cliente.data_vencimento + 'T00:00:00');
                 const dia = dataOriginal.getDate();
                 const hoje = new Date();
-                const mesAtual = hoje.getMonth();
+                const mesIdx = hoje.getMonth();
                 const anoAtual = hoje.getFullYear();
                 
                 // Se a data original ainda não passou, mostra ela
@@ -1746,9 +1751,9 @@
                     dataVencimentoFormatada = dataOriginal.toLocaleDateString('pt-BR');
                 } else {
                     // Senão, mostra o próximo vencimento (dia X do mês atual ou próximo)
-                    let proxVenc = new Date(anoAtual, mesAtual, dia);
+                    let proxVenc = new Date(anoAtual, mesIdx, dia);
                     if (proxVenc < hoje) {
-                        proxVenc = new Date(anoAtual, mesAtual + 1, dia);
+                        proxVenc = new Date(anoAtual, mesIdx + 1, dia);
                     }
                     dataVencimentoFormatada = proxVenc.toLocaleDateString('pt-BR');
                 }
@@ -1757,13 +1762,13 @@
             }
             
             // Verificar status de pagamento baseado no último pagamento do mês atual
-            const hoje = new Date();
-            const mesAtual = hoje.getMonth();
-            const anoAtual = hoje.getFullYear();
+            const hojeStatus = new Date();
+            const mesAtualStatus = hojeStatus.getMonth();
+            const anoAtualStatus = hojeStatus.getFullYear();
             const pagamentosCliente = pagamentos.filter(p => p.cliente_id === clienteId);
             const pagamentoMesAtual = pagamentosCliente.find(p => {
                 const dataPag = new Date(p.data_pagamento);
-                return dataPag.getMonth() === mesAtual && dataPag.getFullYear() === anoAtual;
+                return dataPag.getMonth() === mesAtualStatus && dataPag.getFullYear() === anoAtualStatus;
             });
             
             const statusPagamento = pagamentoMesAtual ? 'PAGO' : 'PENDENTE';
