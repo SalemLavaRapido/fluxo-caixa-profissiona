@@ -1541,11 +1541,15 @@
         
         // Salvar pagamento
         async function salvarPagamento() {
+            console.log('Iniciando salvarPagamento...');
+            
             const clienteId = document.getElementById('pagamentoClienteId').value;
             const clienteNome = document.getElementById('pagamentoClienteNome').textContent;
             const mes = document.getElementById('pagamentoMes').value;
             const valor = parseFloat(document.getElementById('pagamentoValor').value) || 0;
             const forma = document.getElementById('pagamentoForma').value;
+            
+            console.log('Dados:', { clienteId, clienteNome, mes, valor, forma });
             
             if (!mes || valor <= 0) {
                 showAlert('Preencha mês e valor!', 'warning');
@@ -1559,7 +1563,8 @@
             }
             
             try {
-                // Salvar pagamento
+                // 1. Salvar pagamento primeiro
+                console.log('Salvando pagamento...');
                 const { data: pagamentoData, error: errorPag } = await supabaseClient
                     .from('pagamentos_mensalidade')
                     .insert([{
@@ -1568,37 +1573,45 @@
                         mes_referencia: mes,
                         valor_pago: valor,
                         data_pagamento: new Date().toISOString(),
-                        forma_pagamento: forma,
                         status: 'pago'
-                    }])
-                    .select();
+                    }]);
                 
                 if (errorPag) {
                     console.error('Erro ao salvar pagamento:', errorPag);
-                    showAlert('Erro ao salvar: ' + errorPag.message, 'danger');
+                    showAlert('Erro ao salvar pagamento: ' + errorPag.message, 'danger');
                     return;
                 }
                 
-                // Registrar no fluxo de caixa
-                const { error: errorEntrada } = await supabaseClient
-                    .from('entradas')
-                    .insert([{
-                        user_id: user.id,
-                        data_entrada: new Date().toISOString(),
-                        descricao: `Mensalidade ${mes} - ${clienteNome}`,
-                        categoria: 'mensalista',
-                        forma_pagamento: forma,
-                        valor: valor
-                    }]);
+                console.log('Pagamento salvo com sucesso!');
                 
-                if (errorEntrada) {
-                    console.error('Erro ao registrar entrada:', errorEntrada);
+                // 2. Tentar registrar no fluxo de caixa (sem erro crítico)
+                try {
+                    console.log('Registrando no fluxo de caixa...');
+                    const { error: errorEntrada } = await supabaseClient
+                        .from('entradas')
+                        .insert([{
+                            user_id: user.id,
+                            data_entrada: new Date().toISOString(),
+                            descricao: `Mensalidade ${mes} - ${clienteNome}`,
+                            categoria: 'mensalista',
+                            valor: valor
+                        }]);
+                    
+                    if (errorEntrada) {
+                        console.error('Erro ao registrar entrada (não crítico):', errorEntrada);
+                    } else {
+                        console.log('Entrada registrada com sucesso!');
+                    }
+                } catch (errEntrada) {
+                    console.error('Erro ao registrar entrada (não crítico):', errEntrada);
                 }
                 
+                // 3. Fechar modal e mostrar sucesso
                 bootstrap.Modal.getInstance(document.getElementById('modalPagamento')).hide();
                 showAlert(`Pagamento registrado: ${clienteNome} - R$ ${valor.toFixed(2)}`, 'success');
                 
                 await carregarDados();
+                
             } catch (err) {
                 console.error('Erro geral:', err);
                 showAlert('Erro ao processar pagamento: ' + err.message, 'danger');
