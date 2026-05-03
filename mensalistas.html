@@ -416,6 +416,7 @@
                 <div class="modal-body">
                     <form id="formVeiculo">
                         <input type="hidden" id="veiculoClienteId">
+                        <input type="hidden" id="veiculoId">
                         <div class="mb-3">
                             <label class="form-label">Placa *</label>
                             <input type="text" class="form-control" id="veiculoPlaca" maxlength="7" style="text-transform: uppercase;" required>
@@ -1102,10 +1103,10 @@
 
         // Resetar modal para novo cadastro
         function resetModalVeiculo() {
-            // Remover campo hidden de ID se existir
+            // Limpar campo hidden de ID
             const veiculoIdInput = document.getElementById('veiculoId');
             if (veiculoIdInput) {
-                veiculoIdInput.remove();
+                veiculoIdInput.value = '';
             }
             
             // Resetar título
