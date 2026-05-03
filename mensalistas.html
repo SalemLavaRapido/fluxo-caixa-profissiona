@@ -364,6 +364,25 @@
             <div id="listaAlertas"></div>
         </div>
 
+        <!-- Campo de Busca -->
+        <div class="card mb-4" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
+            <div class="card-body" style="background: rgba(255,255,255,0.05);">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label">
+                            <i class="fas fa-search me-2"></i>Buscar por Nome ou Placa
+                        </label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="campoBusca" placeholder="Digite o nome do cliente ou placa do veículo..." style="background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3);">
+                            <button class="btn btn-outline-secondary" type="button" onclick="limparBusca()">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Formulário de Cadastro -->
         <div class="card mb-4" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);">
             <div class="card-header bg-primary text-white">
@@ -852,6 +871,146 @@
                 `;
             }).join('');
         }
+
+        // Funções de busca
+        function filtrarClientes() {
+            const termoBusca = document.getElementById('campoBusca').value.toLowerCase().trim();
+            
+            if (!termoBusca) {
+                renderizarClientes();
+                return;
+            }
+            
+            const clientesFiltrados = clientes.filter(cliente => {
+                // Buscar por nome
+                const nomeMatch = cliente.nome.toLowerCase().includes(termoBusca);
+                
+                // Buscar por placa
+                const veiculosCliente = veiculos.filter(v => v.cliente_id === cliente.id);
+                const placaMatch = veiculosCliente.some(v => 
+                    v.placa.toLowerCase().includes(termoBusca)
+                );
+                
+                return nomeMatch || placaMatch;
+            });
+            
+            renderizarClientesFiltrados(clientesFiltrados);
+        }
+
+        function renderizarClientesFiltrados(clientesFiltrados) {
+            const container = document.getElementById('listaClientes');
+            
+            if (clientesFiltrados.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                        <h5 class="text-muted">Nenhum cliente encontrado</h5>
+                        <p class="text-muted">Tente outros termos de busca</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = clientesFiltrados.map(cliente => {
+                const veiculosCliente = veiculos.filter(v => v.cliente_id === cliente.id);
+                const lavagensCliente = lavagens.filter(l => veiculosCliente.some(v => v.placa === l.placa));
+                const pagamentosCliente = pagamentos.filter(p => p.cliente_id === cliente.id);
+                
+                // Destaque o termo buscado
+                const termoBusca = document.getElementById('campoBusca').value.toLowerCase().trim();
+                const nomeDestacado = cliente.nome.replace(
+                    new RegExp(termoBusca, 'gi'), 
+                    match => `<mark style="background: yellow; color: black;">${match}</mark>`
+                );
+                
+                return `
+                    <div class="cliente-card fade-in">
+                        <div class="cliente-header">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="mb-1">${nomeDestacado}</h5>
+                                    <div class="cliente-info">
+                                        <div class="cliente-info-item">
+                                            <i class="fas fa-phone"></i>
+                                            ${formatarTelefone(cliente.telefone)}
+                                        </div>
+                                        ${cliente.empresa ? `
+                                            <div class="cliente-info-item">
+                                                <i class="fas fa-building"></i>
+                                                ${cliente.empresa}
+                                            </div>
+                                        ` : ''}
+                                        ${cliente.data_vencimento ? `
+                                            <div class="cliente-info-item">
+                                                <i class="fas fa-calendar"></i>
+                                                ${new Date(cliente.data_vencimento + 'T00:00:00').toLocaleDateString('pt-BR')}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <h4 class="mb-0">R$ ${(cliente.valor_mensal || 0).toFixed(2)}</h4>
+                                    <small class="text-success">/mês</small>
+                                </div>
+                            </div>
+                            
+                            ${cliente.observacao ? `
+                                <div class="mb-3 p-2" style="background: rgba(255,255,255,0.1); border-radius: 8px;">
+                                    <small style="color: #e0e0e0;">
+                                        <i class="fas fa-sticky-note me-1" style="color: #ffc107;"></i>
+                                        <strong>Obs:</strong> ${cliente.observacao}
+                                    </small>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="mb-3">
+                                <h6><i class="fas fa-car me-2"></i>Veículos (${veiculosCliente.length})</h6>
+                                ${veiculosCliente.length === 0 ? `
+                                    <p class="text-muted">Nenhum veículo cadastrado</p>
+                                ` : veiculosCliente.map(v => `
+                                    <div class="veiculo-card">
+                                        <i class="fas fa-car me-2"></i>
+                                        <strong>${v.placa}</strong> - ${v.modelo} ${v.cor ? `(${v.cor})` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                            
+                            <div class="d-flex gap-2 mt-3">
+                                <button class="btn btn-outline-info btn-sm flex-fill" onclick="abrirHistoricoLavagens('${cliente.id}', '${cliente.nome}')">
+                                    <i class="fas fa-soap me-1"></i>Histórico Lavagens
+                                    <span class="badge bg-info ms-1">${lavagensCliente.length}</span>
+                                </button>
+                                <button class="btn btn-outline-success btn-sm flex-fill" onclick="abrirHistoricoPagamentos('${cliente.id}', '${cliente.nome}')">
+                                    <i class="fas fa-receipt me-1"></i>Histórico Pagamentos
+                                    <span class="badge bg-success ms-1">${pagamentosCliente.length}</span>
+                                </button>
+                                <button class="btn btn-warning btn-sm flex-fill" onclick="abrirModalPagamento('${cliente.id}', '${cliente.nome}', '${cliente.valor_mensal || 0}')">
+                                    <i class="fas fa-dollar-sign me-1"></i>Pagar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function limparBusca() {
+            document.getElementById('campoBusca').value = '';
+            renderizarClientes();
+        }
+
+        // Adicionar evento de busca
+        document.addEventListener('DOMContentLoaded', function() {
+            const campoBusca = document.getElementById('campoBusca');
+            if (campoBusca) {
+                campoBusca.addEventListener('input', filtrarClientes);
+                campoBusca.addEventListener('keyup', function(e) {
+                    if (e.key === 'Escape') {
+                        limparBusca();
+                    }
+                });
+            }
+        });
 
         // Atualizar estatísticas
         function atualizarStats() {
