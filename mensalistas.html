@@ -631,6 +631,9 @@
             const hoje = new Date();
             document.getElementById('pagamentoMes').value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
 
+            // Configurar campo de busca
+            setupBusca();
+
             await carregarDados();
         });
 
@@ -992,8 +995,8 @@
             renderizarClientes();
         }
 
-        // Adicionar evento de busca
-        document.addEventListener('DOMContentLoaded', function() {
+        // Adicionar evento de busca (movido para o DOMContentLoaded principal)
+        function setupBusca() {
             const campoBusca = document.getElementById('campoBusca');
             if (campoBusca) {
                 campoBusca.addEventListener('input', filtrarClientes);
@@ -1003,7 +1006,7 @@
                     }
                 });
             }
-        });
+        }
 
         // Atualizar estatísticas
         function atualizarStats() {
