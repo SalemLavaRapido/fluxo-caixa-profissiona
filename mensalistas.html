@@ -1636,7 +1636,7 @@
                             pagamentosCliente = entradasData.map(e => ({
                                 id: e.id,
                                 cliente_id: clienteId,
-                                mes_referencia: e.descricao.match(/\(([^)]+)\)/ ? e.descricao.match(/\(([^)]+)\)/)[1] : 'N/A',
+                                mes_referencia: e.descricao.match(/\(([^)]+)\)/) ? e.descricao.match(/\(([^)]+)\)/)[1] : 'N/A',
                                 valor: e.valor,
                                 forma_pagamento: e.forma_pagamento,
                                 data_pagamento: e.data
