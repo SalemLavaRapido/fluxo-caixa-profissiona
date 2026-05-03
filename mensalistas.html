@@ -1645,8 +1645,7 @@
                 await supabaseClient
                     .from('entradas')
                     .delete()
-                    .eq('user_id', user.id)
-                    .eq('cliente_id', pagamentoId);
+                    .eq('user_id', user.id);
 
                 showAlert('Pagamento excluído com sucesso!', 'success');
                 await carregarDados();
