@@ -1628,33 +1628,8 @@ STATUS: PAGO
 Emitido em: ${dtImpressao}
 Obrigado pela preferência!`;
             
-            // Detectar se é mobile
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
-            
-            if (isMobile) {
-                // Mobile: mostrar opções simples
-                const opcao = confirm(`📱 RECIBO AVULSO - ${d.placa}\n\nEscolha uma opção:\n\nOK → Copiar para WhatsApp/Email\nCancelar → Tentar impressão direta`);
-                
-                if (opcao) {
-                    // Copiar para área de transferência
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(textoRecibo).then(() => {
-                            alert('✅ Recibo copiado!\n\nCole no WhatsApp, e-mail ou outro app.');
-                        }).catch(() => {
-                            // Fallback
-                            copiarTextoFallback(textoRecibo);
-                        });
-                    } else {
-                        copiarTextoFallback(textoRecibo);
-                    }
-                } else {
-                    // Tentar impressão direta
-                    imprimirReciboSimples(textoRecibo, d.placa);
-                }
-            } else {
-                // Desktop: imprimir automaticamente
-                imprimirReciboSimples(textoRecibo, d.placa);
-            }
+            // IMPRIMIR DIRETO - sem pedir para copiar (igual entrada)
+            imprimirReciboSimples(textoRecibo, d.placa);
         }
         
         // Função fallback para copiar texto
