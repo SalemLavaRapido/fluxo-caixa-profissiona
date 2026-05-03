@@ -941,7 +941,7 @@
                         <td><span class="tempo-badge pulse">${tempo.texto}</span></td>
                         <td><span class="valor-badge">R$ ${valor.toFixed(2)}</span></td>
                         <td>
-                            <button class="btn btn-secondary btn-sm me-1" onclick="reimprimirCupom('${v.placa}', '${v.cliente_nome || ''}', '${v.data_entrada}', '${tipoVeiculo}', '${numeroFormatado}')" title="Reimprimir">
+                            <button class="btn btn-secondary btn-sm me-1" onclick="reimprimirCupom('${v.placa}', '${(v.cliente_nome || '').replace(/'/g, "\\'")}', '${v.data_entrada}', '${tipoVeiculo}', '${numeroFormatado}')" title="Reimprimir">
                                 <i class="fas fa-print"></i>
                             </button>
                             ${v.telefone ? `
@@ -1769,10 +1769,13 @@ Obrigado pela preferência!`;
         
         // Reimprimir cupom de entrada (versão mobile-friendly)
         function reimprimirCupom(placa, cliente, dataEntrada, tipoVeiculo = 'carro', numeroComprovante = '0000000') {
-            const nomeTipo = tipoVeiculo === 'moto' ? 'MOTO' : tipoVeiculo === 'caminhonete' ? 'CAMINHONETE' : 'CARRO';
-            const valorHora = VALORES_HORA[tipoVeiculo] || VALORES_HORA['carro'];
-            const dataFormatada = new Date(dataEntrada).toLocaleString('pt-BR');
-            const dtImpressao = new Date().toLocaleString('pt-BR');
+            try {
+                console.log('Reimprimir cupom:', { placa, cliente, dataEntrada, tipoVeiculo, numeroComprovante });
+                
+                const nomeTipo = tipoVeiculo === 'moto' ? 'MOTO' : tipoVeiculo === 'caminhonete' ? 'CAMINHONETE' : 'CARRO';
+                const valorHora = VALORES_HORA[tipoVeiculo] || VALORES_HORA['carro'];
+                const dataFormatada = new Date(dataEntrada).toLocaleString('pt-BR');
+                const dtImpressao = new Date().toLocaleString('pt-BR');
             
             // Criar texto simples do cupom de entrada
             const textoCupom = `SALÉM LAVA RÁPIDO & ESTACIONAMENTO
@@ -1820,6 +1823,10 @@ Obrigado pela preferência!`;
             } else {
                 // Desktop: imprimir automaticamente
                 imprimirCupomSimples(textoCupom, placa);
+            }
+            } catch (error) {
+                console.error('Erro ao reimprimir cupom:', error);
+                alert('❌ Erro ao imprimir cupom: ' + error.message);
             }
         }
         
