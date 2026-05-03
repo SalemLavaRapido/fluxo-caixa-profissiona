@@ -477,7 +477,8 @@
                                 <option value="">Selecione...</option>
                                 <option value="dinheiro">Dinheiro</option>
                                 <option value="pix">PIX</option>
-                                <option value="cartao">Cartão</option>
+                                <option value="cartao_credito">Cartão de Crédito</option>
+                                <option value="cartao_debito">Cartão de Débito</option>
                                 <option value="transferencia">Transferência</option>
                             </select>
                         </div>
@@ -842,8 +843,8 @@
                                     <i class="fas fa-receipt me-1"></i>Histórico Pagamentos
                                     <span class="badge bg-success ms-1">${pagamentosCliente.length}</span>
                                 </button>
-                                <button class="btn btn-outline-primary btn-sm flex-fill" onclick="imprimirReciboMensalista('${cliente.id}', '${cliente.nome}', '${cliente.valor_mensal || 0}')">
-                                    <i class="fas fa-print me-1"></i>Imprimir Recibo
+                                <button class="btn btn-warning btn-sm flex-fill" onclick="abrirModalPagamento('${cliente.id}', '${cliente.nome}', '${cliente.valor_mensal || 0}')">
+                                    <i class="fas fa-dollar-sign me-1"></i>Pagar
                                 </button>
                             </div>
                         </div>
@@ -1229,7 +1230,8 @@
                     return;
                 }
 
-                const { error } = await supabaseClient
+                // Inserir pagamento
+                const { error: pagamentoError } = await supabaseClient
                     .from('pagamentos')
                     .insert([{
                         user_id: user.id,
@@ -1240,9 +1242,31 @@
                         data_pagamento: new Date().toISOString()
                     }]);
 
-                if (error) {
-                    showAlert('Erro ao registrar pagamento: ' + error.message, 'danger');
+                if (pagamentoError) {
+                    showAlert('Erro ao registrar pagamento: ' + pagamentoError.message, 'danger');
                     return;
+                }
+
+                // Vincular no fluxo de caixa (tabela entradas)
+                if (valor > 0 && forma !== 'cortesia') {
+                    const cliente = clientes.find(c => c.id === clienteId);
+                    const descricao = `Mensalidade - ${cliente ? cliente.nome : 'Cliente'} (${mes})`;
+                    
+                    const { error: entradaError } = await supabaseClient
+                        .from('entradas')
+                        .insert([{
+                            user_id: user.id,
+                            tipo: 'mensalidade',
+                            descricao: descricao,
+                            valor: valor,
+                            forma_pagamento: forma,
+                            data: new Date().toISOString(),
+                            cliente_id: clienteId
+                        }]);
+                    
+                    if (entradaError) {
+                        console.warn('Erro ao registrar no fluxo de caixa:', entradaError);
+                    }
                 }
 
                 showAlert('Pagamento registrado com sucesso!', 'success');
@@ -1462,6 +1486,7 @@
                                     <th>Data Pagamento</th>
                                     <th>Valor</th>
                                     <th>Forma</th>
+                                    <th>Ações</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1470,7 +1495,15 @@
                                         <td>${formatarMes(p.mes_referencia)}</td>
                                         <td>${formatarData(p.data_pagamento)}</td>
                                         <td>R$ ${(p.valor || 0).toFixed(2)}</td>
-                                        <td>${p.forma_pagamento || '-'}</td>
+                                        <td>${formatarFormaPagamento(p.forma_pagamento)}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" onclick="imprimirComprovantePagamento('${p.id}', '${cliente.nome}', '${p.valor}', '${p.mes_referencia}', '${p.forma_pagamento}', '${p.data_pagamento}')" title="Imprimir Comprovante">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="excluirPagamento('${p.id}', '${formatarMes(p.mes_referencia)}')" title="Excluir Pagamento">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -1552,6 +1585,114 @@
                 printWindow.print();
                 printWindow.close();
             };
+        }
+
+        // Formatar forma de pagamento
+        function formatarFormaPagamento(forma) {
+            const formas = {
+                'dinheiro': 'Dinheiro',
+                'pix': 'PIX',
+                'cartao_credito': 'Cartão de Crédito',
+                'cartao_debito': 'Cartão de Débito',
+                'transferencia': 'Transferência'
+            };
+            return formas[forma] || forma;
+        }
+
+        // Imprimir comprovante de pagamento
+        function imprimirComprovantePagamento(pagamentoId, clienteNome, valor, mesReferencia, formaPagamento, dataPagamento) {
+            const dataEmissao = new Date().toLocaleDateString('pt-BR');
+            const dataFormatada = formatarData(dataPagamento);
+            
+            const comprovanteContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: #333;">COMPROVANTE DE PAGAMENTO</h2>
+                        <p style="margin: 5px 0; color: #666;">Estacionamento</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="margin: 5px 0;"><strong>Cliente:</strong> ${clienteNome}</p>
+                        <p style="margin: 5px 0;"><strong>Mês Referência:</strong> ${formatarMes(mesReferencia)}</p>
+                        <p style="margin: 5px 0;"><strong>Data Pagamento:</strong> ${dataFormatada}</p>
+                        <p style="margin: 5px 0;"><strong>Data Emissão:</strong> ${dataEmissao}</p>
+                        <p style="margin: 5px 0;"><strong>Forma Pagamento:</strong> ${formatarFormaPagamento(formaPagamento)}</p>
+                    </div>
+                    
+                    <div style="border: 2px solid #333; padding: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 18px; font-weight: bold;">VALOR PAGO:</span>
+                            <span style="font-size: 24px; font-weight: bold; color: #333;">R$ ${parseFloat(valor).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px;">
+                        <div style="border-top: 1px solid #999; padding-top: 10px; margin-bottom: 20px;">
+                            <p style="margin: 0; font-size: 12px; color: #666;">Assinatura do Cliente</p>
+                            <div style="height: 40px; border-bottom: 1px solid #999; margin-top: 20px;"></div>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <p style="margin: 0; font-size: 10px; color: #999;">
+                                * Comprovante válido para comprovação de pagamento<br>
+                                * Não duplicável sem assinatura
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<!DOCTYPE html><html><head><title>Comprovante de Pagamento - ' + clienteNome + '</title><style>@media print { body { margin: 0; } @page { margin: 10mm; } }</style></head><body>' + comprovanteContent + '</body></html>');
+            printWindow.document.close();
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.close();
+            };
+        }
+
+        // Excluir pagamento
+        async function excluirPagamento(pagamentoId, mesReferencia) {
+            if (!confirm(`Tem certeza que deseja excluir o pagamento de ${mesReferencia}?`)) {
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                // Excluir pagamento
+                const { error } = await supabaseClient
+                    .from('pagamentos')
+                    .delete()
+                    .eq('id', pagamentoId)
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    showAlert('Erro ao excluir pagamento: ' + error.message, 'danger');
+                    return;
+                }
+
+                // Excluir do fluxo de caixa também
+                await supabaseClient
+                    .from('entradas')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('cliente_id', pagamentoId);
+
+                showAlert('Pagamento excluído com sucesso!', 'success');
+                await carregarDados();
+
+                // Reabrir modal para atualizar
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalHistoricoPagamentos'));
+                if (modal) {
+                    modal.hide();
+                }
+
+            } catch (error) {
+                console.error('Erro ao excluir pagamento:', error);
+                showAlert('Erro ao excluir pagamento', 'danger');
+            }
         }
 
         // Mostrar alertas
