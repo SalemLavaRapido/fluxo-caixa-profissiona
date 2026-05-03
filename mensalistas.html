@@ -354,28 +354,17 @@
         /* CSS responsivo para mobile - não altera desktop */
         @media (max-width: 768px) {
             html, body {
-                width: 100%;
                 max-width: 100%;
                 overflow-x: hidden;
             }
 
-            * {
-                box-sizing: border-box;
-            }
-
             .container,
             .container-fluid {
-                width: 100% !important;
-                max-width: 100% !important;
                 padding-left: 10px !important;
                 padding-right: 10px !important;
             }
 
-            .card,
-            .card-cliente,
-            .form-container {
-                width: 100% !important;
-                max-width: 100% !important;
+            .card-cliente {
                 padding: 12px !important;
                 margin: 8px 0 !important;
             }
@@ -386,7 +375,7 @@
                 align-items: flex-start !important;
             }
 
-            .card-cliente-header > div {
+            .card-cliente-header > div:last-child {
                 width: 100%;
                 display: flex;
                 flex-wrap: wrap;
@@ -408,31 +397,22 @@
                 word-break: break-word;
             }
 
-            input,
-            select,
-            textarea {
-                max-width: 100% !important;
-                width: 100% !important;
+            input.form-control,
+            select.form-control,
+            textarea.form-control {
                 font-size: 14px !important;
             }
 
             .btn {
                 font-size: 0.85rem;
-                padding: 6px 10px;
             }
 
             .btn-sm {
                 font-size: 0.75rem;
-                padding: 4px 8px;
             }
 
             .navbar-brand {
-                font-size: 1rem !important;
-            }
-
-            .navbar-nav .nav-link {
-                font-size: 0.9rem;
-                padding: 8px !important;
+                font-size: 0.95rem !important;
             }
 
             h1, .h1 { font-size: 1.5rem !important; }
@@ -440,27 +420,10 @@
             h3, .h3 { font-size: 1.15rem !important; }
             h4, .h4 { font-size: 1rem !important; }
             h5, .h5 { font-size: 0.95rem !important; }
-            h6, .h6 { font-size: 0.9rem !important; }
-
-            table {
-                font-size: 0.8rem;
-            }
-
-            .table-responsive {
-                width: 100%;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
 
             .modal-dialog {
-                width: 95vw !important;
-                max-width: 95vw !important;
                 margin: 10px auto !important;
-            }
-
-            .modal-content {
-                width: 100% !important;
-                max-width: 100% !important;
+                max-width: calc(100% - 20px) !important;
             }
 
             .modal-body {
@@ -478,48 +441,37 @@
                 gap: 6px;
             }
 
-            .placa-badge {
-                font-size: 0.8rem;
-            }
-
             .d-flex.gap-2 {
                 flex-wrap: wrap;
             }
 
             .d-flex.gap-2 .btn {
                 flex: 1 1 auto;
-                min-width: 0;
             }
 
             .row > [class*="col-"] {
                 margin-bottom: 8px;
             }
 
-            /* Botões de ação no header dos cards */
             .card-cliente-header .btn {
                 padding: 4px 8px;
                 font-size: 0.75rem;
             }
 
-            /* Status do mês */
-            .status-mes-container {
-                flex-direction: column;
-                gap: 4px;
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
         }
 
         /* Mobile pequeno (até 430px) */
         @media (max-width: 430px) {
             .navbar-brand strong {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
             }
 
             .card-cliente {
                 padding: 10px !important;
-            }
-
-            .btn {
-                font-size: 0.8rem;
             }
 
             .placa-badge {
@@ -1920,43 +1872,20 @@
                 })
                 .eq('id', clienteId);
 
-            
-    if (pagamentosCliente.length === 0) {
-        tabela.innerHTML = `
-            <div class="text-center py-4">
-                <i class="fas fa-receipt fa-2x mb-3 text-muted"></i>
-                <p class="text-muted">Nenhum pagamento registrado</p>
-            </div>
-        `;
-    } else {
-        tabela.innerHTML = `
-            <div class="table-responsive">
-                <table class="table table-dark">
-                    <thead>
-                        <tr>
-                            <th>Mês Referência</th>
-                            <th>Data Pagamento</th>
-                            <th>Valor</th>
-                            <th>Forma</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${pagamentosCliente.map(p => `
-                            <tr>
-                                <td>${formatarMes(p.mes_referencia)}</td>
-                                <td>${formatarData(p.data_pagamento)}</td>
-                                <td>R$ ${(p.valor || 0).toFixed(2)}</td>
-                                <td>${formatarFormaPagamento(p.forma_pagamento)}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="imprimirComprovantePagamento('${p.id}', '${cliente.nome}', '${p.valor}', '${p.mes_referencia}', '${p.forma_pagamento}', '${p.data_pagamento}')" title="Imprimir Comprovante">
-                                        <i class="fas fa-print"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="excluirPagamento('${p.id}', '${formatarMes(p.mes_referencia)}')" title="Excluir Pagamento">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
+            if (error) {
+                showAlert('Erro ao atualizar cliente: ' + error.message, 'danger');
+                return;
+            }
+
+            showAlert('Cliente atualizado com sucesso!', 'success');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarCliente'));
+            if (modal) modal.hide();
+            await carregarDados();
+            const campoBusca = document.getElementById('campoBusca');
+            if (campoBusca && campoBusca.value.trim()) {
+                filtrarClientes();
+            }
+        }
 
         // Excluir cliente
         async function excluirCliente(clienteId, nome) {
