@@ -1551,7 +1551,7 @@
             renderizarTabela();
         }
         
-        // Imprimir recibo de saída avulso (58mm) - versão mobile-friendly
+        // Imprimir recibo de saída avulso (58mm) - versão ultra-simplificada
         function imprimirReciboAvulso() {
             const d = window.ultimaSaidaAvulso;
             if (!d) {
@@ -1571,218 +1571,126 @@
             const dtSaida = new Date(d.dataSaida).toLocaleString('pt-BR');
             const dtImpressao = new Date().toLocaleString('pt-BR');
             
-            const conteudo = `
+            // Criar texto simples do recibo
+            const textoRecibo = `SALÉM LAVA RÁPIDO & ESTACIONAMENTO
+CNPJ: 63.992.071/0001-38
+Rua Mariana Junqueira, 1024
+Centro - Ribeirão Preto/SP
+WhatsApp: (16) 99395-3720
+----------------------------------------
+RECIBO DE PAGAMENTO - AVULSO
+PLACA: ${d.placa}
+VEÍCULO: ${tipoNome}${d.cliente ? '\nCLIENTE: ' + d.cliente : ''}
+SERVIÇO: Estacionamento Avulso (${d.horas}h)
+ENTRADA: ${dtEntrada}
+SAÍDA: ${dtSaida}${d.desconto > 0 ? '\nDESCONTO: R$ ' + d.desconto.toFixed(2) : ''}
+VALOR PAGO: R$ ${d.valor.toFixed(2)}
+PAGAMENTO: ${formaPgto}
+STATUS: PAGO
+----------------------------------------
+Emitido em: ${dtImpressao}
+Obrigado pela preferência!`;
+            
+            // Detectar se é mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // Mobile: mostrar opções simples
+                const opcao = confirm(`📱 RECIBO AVULSO - ${d.placa}\n\nEscolha uma opção:\n\nOK → Copiar para WhatsApp/Email\nCancelar → Tentar impressão direta`);
+                
+                if (opcao) {
+                    // Copiar para área de transferência
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(textoRecibo).then(() => {
+                            alert('✅ Recibo copiado!\n\nCole no WhatsApp, e-mail ou outro app.');
+                        }).catch(() => {
+                            // Fallback
+                            copiarTextoFallback(textoRecibo);
+                        });
+                    } else {
+                        copiarTextoFallback(textoRecibo);
+                    }
+                } else {
+                    // Tentar impressão direta
+                    imprimirReciboSimples(textoRecibo, d.placa);
+                }
+            } else {
+                // Desktop: imprimir automaticamente
+                imprimirReciboSimples(textoRecibo, d.placa);
+            }
+        }
+        
+        // Função fallback para copiar texto
+        function copiarTextoFallback(texto) {
+            const textarea = document.createElement('textarea');
+            textarea.value = texto;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('✅ Recibo copiado!\n\nCole no WhatsApp, e-mail ou outro app.');
+            } catch (err) {
+                alert('❌ Não foi possível copiar. Tente manualmente:\n\n' + texto);
+            }
+            document.body.removeChild(textarea);
+        }
+        
+        // Função de impressão simples
+        function imprimirReciboSimples(texto, placa) {
+            const html = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recibo Avulso - ${d.placa}</title>
+    <title>Recibo Avulso - ${placa}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Courier New', monospace;
-            background: #fff;
-            color: #000;
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
+        body { 
+            font-family: 'Courier New', monospace; 
+            font-size: 11px; 
+            width: 58mm; 
+            margin: 0; 
+            padding: 2mm; 
+            text-align: center; 
         }
-        .recibo-container {
-            max-width: 58mm;
-            margin: 0 auto;
-            padding: 4mm 2mm;
-            text-align: center;
-            border: 1px solid #ddd;
-            background: white;
-        }
-        .titulo { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
-        .info { font-size: 10px; margin: 1px 0; }
-        .linha { border-top: 1px dashed #000; margin: 5px 0; }
-        .label { font-weight: bold; font-size: 11px; margin-top: 4px; }
-        .valor-linha { font-size: 11px; margin: 2px 0; word-break: break-word; }
-        .total { font-size: 14px; font-weight: bold; margin: 6px 0; }
-        .status { font-size: 13px; font-weight: bold; border: 2px solid #000; padding: 4px; margin: 6px 0; }
-        .rodape { font-size: 9px; margin-top: 6px; }
-        .botoes-mobile {
-            margin: 20px 0;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .btn-mobile {
-            padding: 12px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            max-width: 300px;
-        }
-        .btn-imprimir { background: #28a745; color: white; }
-        .btn-compartilhar { background: #007bff; color: white; }
-        .btn-copiar { background: #6c757d; color: white; }
-        .aviso-mobile {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 14px;
-            color: #856404;
+        pre { 
+            margin: 0; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
         }
         @media print {
-            body { background: white; padding: 0; }
-            .recibo-container { 
-                width: 58mm; 
-                max-width: 58mm;
-                margin: 0;
-                border: none;
-                box-shadow: none;
-            }
-            .botoes-mobile, .aviso-mobile { display: none !important; }
             @page { margin: 0; size: 58mm auto; }
+            body { width: 58mm; }
         }
     </style>
 </head>
 <body>
-    <div class="aviso-mobile">
-        <strong>📱 Dicas para impressão:</strong><br>
-        • Use "Imprimir" para impressora térmica<br>
-        • "Compartilhar" envia por WhatsApp/E-mail<br>
-        • "Copiar Texto" para colar em outro app
-    </div>
-    
-    <div class="recibo-container">
-        <div class="titulo">SALÉM LAVA RÁPIDO<br>& ESTACIONAMENTO</div>
-        <div class="info">CNPJ: 63.992.071/0001-38</div>
-        <div class="info">Rua Mariana Junqueira, 1024</div>
-        <div class="info">Centro - Ribeirão Preto/SP</div>
-        <div class="info">WhatsApp: (16) 99395-3720</div>
-        <div class="linha"></div>
-        <div class="label">RECIBO DE PAGAMENTO</div>
-        <div class="info">TIPO: AVULSO</div>
-        <div class="linha"></div>
-        <div class="label">PLACA</div>
-        <div class="valor-linha">${d.placa}</div>
-        <div class="label">VEÍCULO</div>
-        <div class="valor-linha">${tipoNome}</div>
-        ${d.cliente ? `<div class="label">CLIENTE</div><div class="valor-linha">${d.cliente}</div>` : ''}
-        <div class="label">SERVIÇO</div>
-        <div class="valor-linha">Estacionamento Avulso<br>${d.horas} hora(s)</div>
-        <div class="linha"></div>
-        <div class="info">Entrada: ${dtEntrada}</div>
-        <div class="info">Saída: ${dtSaida}</div>
-        <div class="linha"></div>
-        ${d.desconto > 0 ? `<div class="info">Desconto: R$ ${d.desconto.toFixed(2)}</div>` : ''}
-        <div class="total">VALOR PAGO<br>R$ ${d.valor.toFixed(2)}</div>
-        <div class="info">Pagamento: ${formaPgto}</div>
-        <div class="status">PAGO</div>
-        <div class="linha"></div>
-        <div class="rodape">Emitido em: ${dtImpressao}</div>
-        <div class="rodape">Obrigado pela preferência!</div>
-    </div>
-    
-    <div class="botoes-mobile">
-        <button class="btn-mobile btn-imprimir" onclick="window.print()">
-            🖨️ IMPRIMIR RECIBO
-        </button>
-        <button class="btn-mobile btn-compartilhar" onclick="compartilharRecibo()">
-            📤 COMPARTILHAR
-        </button>
-        <button class="btn-mobile btn-copiar" onclick="copiarTexto()">
-            📋 COPIAR TEXTO
-        </button>
-    </div>
-    
+    <pre>${texto}</pre>
     <script>
-        function compartilharRecibo() {
-            const texto = \`RECIBO AVULSO
-PLACA: ${d.placa}
-VEÍCULO: ${tipoNome}
-${d.cliente ? 'CLIENTE: ' + d.cliente + '\\n' : ''}
-SERVIÇO: Estacionamento Avulso (${d.horas}h)
-ENTRADA: ${dtEntrada}
-SAÍDA: ${dtSaida}
-VALOR: R$ ${d.valor.toFixed(2)}
-PAGAMENTO: ${formaPgto}
-STATUS: PAGO
-
-SALÉM LAVA RÁPIDO & ESTACIONAMENTO
-CNPJ: 63.992.071/0001-38
-Rua Mariana Junqueira, 1024 - Centro
-Ribeirão Preto/SP
-WhatsApp: (16) 99395-3720\`;
-            
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Recibo Avulso - ' + d.placa,
-                    text: texto
-                }).catch(err => console.log('Erro ao compartilhar:', err));
-            } else {
-                // Fallback para navegadores que não suportam Web Share API
-                copiarTexto();
-            }
-        }
-        
-        function copiarTexto() {
-            const texto = \`RECIBO AVULSO
-PLACA: ${d.placa}
-VEÍCULO: ${tipoNome}
-${d.cliente ? 'CLIENTE: ' + d.cliente + '\\n' : ''}
-SERVIÇO: Estacionamento Avulso (${d.horas}h)
-ENTRADA: ${dtEntrada}
-SAÍDA: ${dtSaida}
-VALOR: R$ ${d.valor.toFixed(2)}
-PAGAMENTO: ${formaPgto}
-STATUS: PAGO
-
-SALÉM LAVA RÁPIDO & ESTACIONAMENTO
-CNPJ: 63.992.071/0001-38
-Rua Mariana Junqueira, 1024 - Centro
-Ribeirão Preto/SP
-WhatsApp: (16) 99395-3720\`;
-            
-            navigator.clipboard.writeText(texto).then(() => {
-                alert('✅ Recibo copiado para a área de transferência!\\n\\nCole em WhatsApp, e-mail ou outro app.');
-            }).catch(() => {
-                // Fallback para navegadores antigos
-                const textarea = document.createElement('textarea');
-                textarea.value = texto;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                alert('✅ Recibo copiado para a área de transferência!\\n\\nCole em WhatsApp, e-mail ou outro app.');
-            });
-        }
-        
-        // Tentar imprimir automaticamente no desktop, mas não no mobile
-        if (window.innerWidth > 768) {
-            window.onload = function() {
-                setTimeout(() => window.print(), 500);
-            };
-        }
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => window.close(), 1000);
+        }, 100);
     <\/script>
 </body>
 </html>`;
             
-            // Tentar abrir nova janela (desktop)
-            if (window.innerWidth > 768) {
-                const janela = window.open('', '_blank', 'width=400,height=800');
-                if (janela) {
-                    janela.document.write(conteudo);
-                    janela.document.close();
+            // Tentar abrir em nova janela
+            try {
+                const w = window.open('', '_blank', 'width=300,height=400');
+                if (w) {
+                    w.document.write(html);
+                    w.document.close();
                     return;
                 }
+            } catch (e) {
+                console.log('Popup bloqueado, usando mesma janela');
             }
             
-            // No mobile ou se popup bloqueado, abrir na mesma janela
-            const novaJanela = window.open('', '_self');
-            novaJanela.document.write(conteudo);
-            novaJanela.document.close();
+            // Fallback: mesma janela
+            document.write(html);
+            document.close();
         }
         
         // Imprimir cupom de entrada
@@ -1859,17 +1767,116 @@ WhatsApp: (16) 99395-3720\`;
             }, 300);
         }
         
-        // Reimprimir cupom
+        // Reimprimir cupom de entrada (versão mobile-friendly)
         function reimprimirCupom(placa, cliente, dataEntrada, tipoVeiculo = 'carro', numeroComprovante = '0000000') {
+            const nomeTipo = tipoVeiculo === 'moto' ? 'MOTO' : tipoVeiculo === 'caminhonete' ? 'CAMINHONETE' : 'CARRO';
+            const valorHora = VALORES_HORA[tipoVeiculo] || VALORES_HORA['carro'];
             const dataFormatada = new Date(dataEntrada).toLocaleString('pt-BR');
-            imprimirCupomEntrada({
-                placa: placa,
-                cliente: cliente,
-                tipoVeiculo: tipoVeiculo,
-                numeroComprovante: numeroComprovante,
-                valorHora: VALORES_HORA[tipoVeiculo],
-                data: dataFormatada
-            });
+            const dtImpressao = new Date().toLocaleString('pt-BR');
+            
+            // Criar texto simples do cupom de entrada
+            const textoCupom = `SALÉM LAVA RÁPIDO & ESTACIONAMENTO
+CNPJ: 63.992.071/0001-38
+Rua Mariana Junqueira, 1024
+Centro - Ribeirão Preto/SP
+WhatsApp: (16) 99395-3720
+----------------------------------------
+COMPROVANTE DE ENTRADA
+Nº: ${numeroComprovante}
+PLACA: ${placa}
+VEÍCULO: ${nomeTipo} - R$ ${valorHora.toFixed(2)}/hora${cliente ? '\nCLIENTE: ' + cliente : ''}
+ENTRADA: ${dataFormatada}
+----------------------------------------
+GUARDE ESTE COMPROVANTE
+Não nos responsabilizamos por objetos no veículo.
+Perda do ticket: exigidos documentos do veículo e do condutor.
+----------------------------------------
+Emitido em: ${dtImpressao}
+Obrigado pela preferência!`;
+            
+            // Detectar se é mobile
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            
+            if (isMobile) {
+                // Mobile: mostrar opções simples
+                const opcao = confirm(`📱 CUPOM ENTRADA - ${placa}\n\nEscolha uma opção:\n\nOK → Copiar para WhatsApp/Email\nCancelar → Tentar impressão direta`);
+                
+                if (opcao) {
+                    // Copiar para área de transferência
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(textoCupom).then(() => {
+                            alert('✅ Cupom copiado!\n\nCole no WhatsApp, e-mail ou outro app.');
+                        }).catch(() => {
+                            // Fallback
+                            copiarTextoFallback(textoCupom);
+                        });
+                    } else {
+                        copiarTextoFallback(textoCupom);
+                    }
+                } else {
+                    // Tentar impressão direta
+                    imprimirCupomSimples(textoCupom, placa);
+                }
+            } else {
+                // Desktop: imprimir automaticamente
+                imprimirCupomSimples(textoCupom, placa);
+            }
+        }
+        
+        // Função de impressão simples para cupom de entrada
+        function imprimirCupomSimples(texto, placa) {
+            const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Cupom Entrada - ${placa}</title>
+    <style>
+        body { 
+            font-family: 'Courier New', monospace; 
+            font-size: 11px; 
+            width: 58mm; 
+            margin: 0; 
+            padding: 2mm; 
+            text-align: center; 
+        }
+        pre { 
+            margin: 0; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+        }
+        @media print {
+            @page { margin: 0; size: 58mm auto; }
+            body { width: 58mm; }
+        }
+    </style>
+</head>
+<body>
+    <pre>${texto}</pre>
+    <script>
+        setTimeout(() => {
+            window.print();
+            setTimeout(() => window.close(), 1000);
+        }, 100);
+    <\/script>
+</body>
+</html>`;
+            
+            // Tentar abrir em nova janela
+            try {
+                const w = window.open('', '_blank', 'width=300,height=400');
+                if (w) {
+                    w.document.write(html);
+                    w.document.close();
+                    return;
+                }
+            } catch (e) {
+                console.log('Popup bloqueado, usando mesma janela');
+            }
+            
+            // Fallback: mesma janela
+            document.write(html);
+            document.close();
         }
     </script>
 </body>
