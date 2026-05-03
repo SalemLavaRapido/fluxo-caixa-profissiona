@@ -1078,6 +1078,18 @@
             const alertas = [];
             
             clientes.forEach(cliente => {
+                // Verificar se cliente já pagou no mês atual
+                const mesAtualStr = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}`;
+                const pagamentosCliente = pagamentos.filter(p => 
+                    p.cliente_id === cliente.id && 
+                    p.mes_referencia === mesAtualStr
+                );
+                
+                // Se já pagou no mês atual, não mostrar alerta
+                if (pagamentosCliente.length > 0) {
+                    return;
+                }
+                
                 let dataVencimento;
                 let dataFormatada;
                 let diaVencimento;
