@@ -1030,6 +1030,43 @@
             document.getElementById('faturamentoMensal').textContent = `R$ ${faturamentoMensal.toFixed(0)}`;
         }
 
+        // Atualizar status de pagamento do cliente
+        async function atualizarStatusPagamento(clienteId, mesPago) {
+            try {
+                // Buscar cliente
+                const cliente = clientes.find(c => c.id === clienteId);
+                if (!cliente) return;
+                
+                // Calcular próximo vencimento após o pagamento
+                const dataVencimento = cliente.data_vencimento;
+                if (dataVencimento) {
+                    const diaVencimento = new Date(dataVencimento).getDate();
+                    const [ano, mes] = mesPago.split('-');
+                    const proximoVencimento = new Date(parseInt(ano), parseInt(mes), diaVencimento);
+                    
+                    // Atualizar data de vencimento do cliente para o próximo mês
+                    const { error } = await supabaseClient
+                        .from('clientes_estacionamento')
+                        .update({
+                            data_vencimento: proximoVencimento.toISOString().split('T')[0],
+                            ultimo_pagamento: new Date().toISOString(),
+                            status_pagamento: 'pago'
+                        })
+                        .eq('id', clienteId);
+                    
+                    if (error) {
+                        console.warn('Erro ao atualizar status do cliente:', error);
+                    }
+                }
+                
+                // Remover cliente da lista de atrasados (se estiver em alertas)
+                verificarAlertasPagamento();
+                
+            } catch (error) {
+                console.warn('Erro ao atualizar status pagamento:', error);
+            }
+        }
+
         // Verificar alertas de pagamento
         function verificarAlertas() {
             const hoje = new Date();
@@ -1385,6 +1422,10 @@
             if (!user) return;
 
             try {
+                // Buscar veículos do cliente para incluir placa
+                const veiculosCliente = veiculos.filter(v => v.cliente_id === clienteId);
+                const placas = veiculosCliente.map(v => v.placa).join(', ') || 'Nenhuma placa';
+                
                 // Salvar na tabela pagamentos (para histórico)
                 const { error: pagamentoError } = await supabaseClient
                     .from('pagamentos')
@@ -1401,8 +1442,8 @@
                     console.warn('Erro ao salvar pagamento (tabela pode não existir):', pagamentoError);
                 }
 
-                // Vincular no fluxo de caixa (tabela entradas)
-                const descricao = `Mensalidade - ${clienteNome} (${mes})`;
+                // Vincular no fluxo de caixa com placa do veículo
+                const descricao = `Mensalidade - ${clienteNome} (${mes}) - Placas: ${placas}`;
                 
                 const { error: entradaError } = await supabaseClient
                     .from('entradas')
@@ -1412,7 +1453,9 @@
                         valor: valor,
                         forma_pagamento: forma,
                         categoria: 'Mensalista',
-                        data: new Date().toISOString()
+                        data: new Date().toISOString(),
+                        cliente_id: clienteId,
+                        placa: placas
                     }]);
                 
                 if (entradaError) {
@@ -1421,6 +1464,9 @@
                 }
 
                 showAlert('Pagamento registrado com sucesso!', 'success');
+                
+                // Atualizar status do cliente para pago no mês atual
+                await atualizarStatusPagamento(clienteId, mes);
                 
                 // Fechar modal e recarregar dados
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalPagamento'));
