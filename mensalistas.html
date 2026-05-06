@@ -2430,23 +2430,44 @@
             if (!user) return;
 
             try {
-                // Excluir pagamento
-                const { error } = await supabaseClient
-                    .from('pagamentos')
-                    .delete()
-                    .eq('id', pagamentoId)
-                    .eq('user_id', user.id);
+                // Verificar se o pagamento é da tabela 'pagamentos' ou veio de 'entradas'
+                const ehEntrada = pagamentoId.startsWith('entrada_');
+                
+                if (ehEntrada) {
+                    // Extrair ID real da entrada
+                    const entradaId = pagamentoId.replace('entrada_', '');
+                    
+                    // Excluir apenas da tabela entradas
+                    const { error } = await supabaseClient
+                        .from('entradas')
+                        .delete()
+                        .eq('id', entradaId)
+                        .eq('user_id', user.id);
+                        
+                    if (error) {
+                        showAlert('Erro ao excluir pagamento: ' + error.message, 'danger');
+                        return;
+                    }
+                } else {
+                    // Excluir da tabela pagamentos
+                    const { error } = await supabaseClient
+                        .from('pagamentos')
+                        .delete()
+                        .eq('id', pagamentoId)
+                        .eq('user_id', user.id);
 
-                if (error) {
-                    showAlert('Erro ao excluir pagamento: ' + error.message, 'danger');
-                    return;
+                    if (error) {
+                        showAlert('Erro ao excluir pagamento: ' + error.message, 'danger');
+                        return;
+                    }
+
+                    // Excluir também do fluxo de caixa (entradas) se existir
+                    await supabaseClient
+                        .from('entradas')
+                        .delete()
+                        .eq('user_id', user.id)
+                        .ilike('descricao', '%Mensalidade%');
                 }
-
-                // Excluir do fluxo de caixa também
-                await supabaseClient
-                    .from('entradas')
-                    .delete()
-                    .eq('user_id', user.id);
 
                 showAlert('Pagamento excluído com sucesso!', 'success');
                 await carregarDados();
