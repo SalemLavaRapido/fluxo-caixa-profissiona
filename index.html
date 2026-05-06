@@ -1008,6 +1008,13 @@
     <script>
     async function salvarFinal() {
         try {
+            // Verificar se está editando (ID no campo hidden OU no entradasSystem.editingId)
+            let entradaId = document.getElementById('entradaId').value;
+            if (!entradaId && typeof entradasSystem !== 'undefined' && entradasSystem.editingId) {
+                entradaId = entradasSystem.editingId;
+            }
+            console.log('[SALVAR ENTRADA] entradaId detectado:', entradaId);
+            
             // Obter dados do formulário
             const dados = {
                 data: document.getElementById('entradaData').value,
@@ -1040,10 +1047,22 @@
             // Adicionar user_id
             dados.user_id = user.id;
             
-            // Salvar com await
-            const { data, error } = await supabase
-                .from('entradas')
-                .insert([dados]);
+            let error;
+            if (entradaId) {
+                // EDITAR: fazer UPDATE
+                const result = await supabase
+                    .from('entradas')
+                    .update(dados)
+                    .eq('id', entradaId)
+                    .eq('user_id', user.id);
+                error = result.error;
+            } else {
+                // NOVO: fazer INSERT
+                const result = await supabase
+                    .from('entradas')
+                    .insert([dados]);
+                error = result.error;
+            }
                 
             if (error) {
                 alert('Erro ao salvar: ' + error.message);
@@ -1051,8 +1070,12 @@
                 // Fechar modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalEntrada'));
                 if (modal) modal.hide();
-                // Limpar formulário
+                // Limpar formulário e ID de edição
                 document.getElementById('formEntrada').reset();
+                document.getElementById('entradaId').value = '';
+                if (typeof entradasSystem !== 'undefined' && entradasSystem.editingId !== undefined) {
+                    entradasSystem.editingId = null;
+                }
                 // Atualizar dados sem recarregar página
                 await entradasSystem.carregarEntradas();
                 await entradasSystem.renderizarTabela();
@@ -1063,6 +1086,28 @@
             alert('Erro: ' + err.message);
         }
     }
+    
+    // Sobrescrever window.salvarEntrada para evitar duplicação pelo handler antigo (entradas.js + app.js)
+    window.salvarEntrada = function() {
+        console.log('[OVERRIDE] salvarEntrada redirecionando para salvarFinal');
+        salvarFinal();
+    };
+    
+    // Substituir submit listener do formEntrada para evitar duplicação
+    document.addEventListener('DOMContentLoaded', function() {
+        const formEntrada = document.getElementById('formEntrada');
+        if (formEntrada) {
+            // Clonar o form para remover todos os listeners existentes
+            const novoForm = formEntrada.cloneNode(true);
+            formEntrada.parentNode.replaceChild(novoForm, formEntrada);
+            // Adicionar apenas o handler correto
+            novoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                salvarFinal();
+            });
+        }
+    });
     
     // Função salvar SAÍDA
     async function salvarSaidaFinal() {
