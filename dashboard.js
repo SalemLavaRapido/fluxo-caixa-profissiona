@@ -20,14 +20,13 @@ class DashboardSystem {
             await entradasSystem.carregarEntradas(filtros);
             await saidasSystem.carregarSaidas(filtros);
 
-            // Calcular totais - Filtrar apenas saídas pagas (com prefixo [Conta Paga])
+            // Calcular totais
             const totalEntradas = entradasSystem.calcularTotal();
-            const saidasPagas = saidasSystem.saidas.filter(s => s.descricao.startsWith('[Conta Paga]'));
-            const totalSaidas = saidasPagas.reduce((sum, s) => sum + parseFloat(s.valor || 0), 0);
+            const totalSaidas = saidasSystem.calcularTotal();
             const saldoFinal = totalEntradas - totalSaidas;
 
             // Calcular percentual de crescimento
-            const percentualCrescimento = totalSaidas > 0 ?
+            const percentualCrescimento = totalSaidas > 0 ? 
                 ((totalEntradas - totalSaidas) / totalSaidas * 100) : 0;
 
             // Atualizar cards

@@ -639,6 +639,7 @@
                                 <option value="">Selecione...</option>
                                 <option value="lavagem">Lavagem</option>
                                 <option value="estacionamento">Estacionamento</option>
+                                <option value="Estacionamento Mensalista">Estacionamento Mensalista</option>
                                 <option value="servicos">Serviços Adicionais</option>
                                 <option value="outros">Outros</option>
                             </select>
@@ -944,7 +945,7 @@
                     const { data: entradasData, error: entradasError } = await this.supabase
                         .from('entradas')
                         .select('*')
-                        .order('data', { ascending: false });
+                        .order('data_entrada', { ascending: false });
 
                     if (entradasError) {
                         throw entradasError;
@@ -962,10 +963,47 @@
                     }
                     this.saidas = saidasData || [];
 
+                    // Preencher filtro de categorias
+                    this.preencherFiltroCategorias();
+
                     console.log('Dados carregados:', { entradas: this.entradas.length, saidas: this.saidas.length });
                 } catch (error) {
                     console.error('Erro ao carregar dados:', error);
                     alert('Erro ao carregar dados: ' + error.message);
+                }
+            }
+
+            preencherFiltroCategorias() {
+                const filtroCategoria = document.getElementById('filtroCategoria');
+                if (!filtroCategoria) return;
+
+                // Obter categorias únicas das entradas
+                const categorias = [...new Set(this.entradas.map(e => e.categoria))];
+                
+                // Preencher select
+                filtroCategoria.innerHTML = '<option value="">Todas</option>';
+                categorias.forEach(categoria => {
+                    const option = document.createElement('option');
+                    option.value = categoria;
+                    option.textContent = this.formatarCategoriaEntrada(categoria);
+                    filtroCategoria.appendChild(option);
+                });
+
+                // Adicionar evento de filtro
+                filtroCategoria.onchange = () => this.filtrarPorCategoria();
+            }
+
+            filtrarPorCategoria() {
+                const filtroCategoria = document.getElementById('filtroCategoria');
+                const categoriaSelecionada = filtroCategoria.value;
+
+                if (categoriaSelecionada === '') {
+                    // Mostrar todas as entradas
+                    this.renderizarEntradas(this.entradas);
+                } else {
+                    // Filtrar por categoria
+                    const entradasFiltradas = this.entradas.filter(entrada => entrada.categoria === categoriaSelecionada);
+                    this.renderizarEntradas(entradasFiltradas);
                 }
             }
 
@@ -1079,10 +1117,11 @@
                 this.renderizarSaidas();
             }
 
-            renderizarEntradas() {
+            renderizarEntradas(entradasParaRenderizar = null) {
                 const tbody = document.getElementById('tabelaEntradas');
+                const entradas = entradasParaRenderizar || this.entradas;
                 
-                if (this.entradas.length === 0) {
+                if (entradas.length === 0) {
                     tbody.innerHTML = `
                         <tr>
                             <td colspan="5" class="text-center text-muted">
@@ -1094,9 +1133,9 @@
                     return;
                 }
 
-                tbody.innerHTML = this.entradas.map(entrada => `
+                tbody.innerHTML = entradas.map(entrada => `
                     <tr>
-                        <td>${this.formatarData(entrada.data)}</td>
+                        <td>${this.formatarData(entrada.data_entrada)}</td>
                         <td>${entrada.descricao}</td>
                         <td><span class="badge bg-success">${this.formatarCategoriaEntrada(entrada.categoria)}</span></td>
                         <td class="text-success fw-bold">+R$ ${this.formatarDinheiro(entrada.valor)}</td>
@@ -1457,6 +1496,7 @@
                 const categorias = {
                     'lavagem': 'Lavagem',
                     'estacionamento': 'Estacionamento',
+                    'Estacionamento Mensalista': 'Estacionamento Mensalista',
                     'servicos': 'Serviços',
                     'outros': 'Outros'
                 };
@@ -1556,7 +1596,7 @@
                         yPosition += 10;
                     }
                     
-                    doc.text(`${this.formatarData(entrada.data)} - ${entrada.descricao}`, 30, yPosition);
+                    doc.text(`${this.formatarData(entrada.data_entrada)} - ${entrada.descricao}`, 30, yPosition);
                     doc.text(`Categoria: ${this.formatarCategoriaEntrada(entrada.categoria)}`, 30, yPosition + 8);
                     doc.text(`Valor: R$ ${this.formatarDinheiro(entrada.valor)}`, 30, yPosition + 16);
                     yPosition += 25;

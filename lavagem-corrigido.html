@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lavagem - Controle Completo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        .navbar-custom {
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .stats-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .stats-card-alerta {
+            background: var(--danger-gradient);
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .card-custom {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header-custom {
+            background: var(--primary-gradient);
+            border-radius: 20px 20px 0 0;
+            border: none;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255,255,255,0.15);
+            border-color: #667eea;
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+
+        .form-label {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .alert-custom {
+            border: none;
+            border-radius: 10px;
+        }
+
+        .alert-success-custom {
+            background: var(--success-gradient);
+            color: #fff;
+        }
+
+        .alert-danger-custom {
+            background: var(--danger-gradient);
+            color: #fff;
+        }
+
+        .alert-warning-custom {
+            background: var(--warning-gradient);
+            color: #fff;
+        }
+
+        .alert-info-custom {
+            background: var(--info-gradient);
+            color: #fff;
+        }
+
+        .table-custom {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .table-custom table {
+            margin: 0;
+        }
+
+        .table-custom th {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .table-custom td {
+            border: none;
+            color: #fff;
+            vertical-align: middle;
+        }
+
+        .table-custom tbody tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .btn-custom {
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s;
+        }
+
+        .btn-success-custom {
+            background: var(--success-gradient);
+            color: #fff;
+        }
+
+        .btn-success-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-danger-custom {
+            background: var(--danger-gradient);
+            color: #fff;
+        }
+
+        .btn-danger-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(235, 51, 73, 0.4);
+        }
+
+        .btn-info-custom {
+            background: var(--info-gradient);
+            color: #fff;
+        }
+
+        .btn-info-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-warning-custom {
+            background: var(--warning-gradient);
+            color: #fff;
+        }
+
+        .btn-warning-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .modal-custom .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-custom .modal-header {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-custom .modal-footer {
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alerta-item {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .badge-custom {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+
+        .badge-dias {
+            background: var(--warning-gradient);
+            color: #fff;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: #fff;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-whatsapp:hover {
+            background: #128C7E;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .secao-alertas {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .nav-tabs .nav-link {
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .nav-tabs .nav-link:hover {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-car me-2"></i>
+                <strong>Fluxo Caixa Profissional</strong>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3" id="userInfo">
+                    <i class="fas fa-user me-1"></i>Carregando...
+                </span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Sair
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid p-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-soap me-2"></i>Lavagem</h2>
+            <a href="index.html" class="btn btn-outline-light">
+                <i class="fas fa-arrow-left me-2"></i>Voltar
+            </a>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card fade-in">
+                    <i class="fas fa-soap fa-2x mb-2" style="color: #4facfe;"></i>
+                    <div class="stats-number" id="lavagensHoje">0</div>
+                    <div>Lavagens Hoje</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card fade-in">
+                    <i class="fas fa-calendar-week fa-2x mb-2" style="color: #667eea;"></i>
+                    <div class="stats-number" id="lavagensSemana">0</div>
+                    <div>Esta Semana</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card fade-in">
+                    <i class="fas fa-calendar-alt fa-2x mb-2" style="color: #38ef7d;"></i>
+                    <div class="stats-number" id="lavagensMes">0</div>
+                    <div>Este Mês</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="stats-card fade-in">
+                    <i class="fas fa-dollar-sign fa-2x mb-2" style="color: #f093fb;"></i>
+                    <div class="stats-number" id="faturamentoMes">R$ 0</div>
+                    <div>Faturamento Mês</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção Alertas -->
+        <div class="secao-alertas" id="secaoAlertas" style="display: none;">
+            <h5 class="mb-3">
+                <i class="fas fa-exclamation-triangle me-2"></i>Carros sem Lavar há mais de 30 dias
+                <span class="badge bg-warning ms-2" id="totalAlertas">0</span>
+            </h5>
+            <div id="listaAlertas"></div>
+        </div>
+
+        <!-- Formulário de Lavagem -->
+        <div class="card-custom">
+            <div class="card-header card-header-custom text-white">
+                <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Registrar Nova Lavagem</h5>
+            </div>
+            <div class="card-body">
+                <form id="formLavagem">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Placa *</label>
+                            <input type="text" class="form-control" id="placa" maxlength="7" style="text-transform: uppercase;" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="modelo">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Cor</label>
+                            <input type="text" class="form-control" id="cor">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-control" id="tipoLavagem">
+                                <option value="">Selecione...</option>
+                                <option value="simples">Simples</option>
+                                <option value="completa">Completa</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Cliente</label>
+                            <select class="form-control" id="tipoCliente">
+                                <option value="">Selecione...</option>
+                                <option value="mensalista">Mensalista</option>
+                                <option value="avulso">Avulso</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="valor" step="0.01" min="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Celular</label>
+                            <input type="tel" class="form-control" id="celular">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Observação</label>
+                            <textarea class="form-control" id="observacao" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-7 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="imprimirReciboLavagem()">
+                                <i class="fas fa-print me-2"></i>Imprimir Recibo
+                            </button>
+                            <button type="submit" class="btn btn-success-custom">
+                                <i class="fas fa-plus me-2"></i>Adicionar na Fila
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mt-4" id="lavagemTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico" type="button" role="tab">
+                    <i class="fas fa-history me-2"></i>Histórico de Lavagens
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="fila-tab" data-bs-toggle="tab" data-bs-target="#fila" type="button" role="tab">
+                    <i class="fas fa-list me-2"></i>Fila de Lavagem
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="lavagemTabContent">
+            <!-- Tab Histórico -->
+            <div class="tab-pane fade show active" id="historico" role="tabpanel">
+                <div class="card-custom mt-3">
+                    <div class="card-body">
+                        <!-- Filtros -->
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Data Inicial</label>
+                                <input type="date" class="form-control" id="filtroDataInicial">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Data Final</label>
+                                <input type="date" class="form-control" id="filtroDataFinal">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tipo Cliente</label>
+                                <select class="form-control" id="filtroTipoCliente">
+                                    <option value="">Todos</option>
+                                    <option value="mensalista">Mensalista</option>
+                                    <option value="avulso">Avulso</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-info-custom" onclick="filtrarHistorico()">
+                                    <i class="fas fa-filter me-2"></i>Filtrar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Tabela Histórico -->
+                        <div class="table-custom">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Placa</th>
+                                        <th>Modelo/Cor</th>
+                                        <th>Tipo</th>
+                                        <th>Cliente</th>
+                                        <th>Valor</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaHistorico">
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                            <p>Nenhuma lavagem registrada</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Fila -->
+            <div class="tab-pane fade" id="fila" role="tabpanel">
+                <div class="card-custom mt-3">
+                    <div class="card-body">
+                        <div class="table-custom">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Placa</th>
+                                        <th>Modelo/Cor</th>
+                                        <th>Tipo</th>
+                                        <th>Cliente</th>
+                                        <th>Valor</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaFila">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                            <p>Nenhum veículo na fila</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Lavagem -->
+    <div class="modal fade modal-custom" id="modalEditarLavagem" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Editar Lavagem
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarLavagem">
+                        <input type="hidden" id="editarLavagemId">
+                        <div class="mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="editarPlaca" maxlength="7" style="text-transform: uppercase;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="editarModelo">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cor</label>
+                            <input type="text" class="form-control" id="editarCor">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-control" id="editarTipoLavagem">
+                                <option value="">Selecione...</option>
+                                <option value="simples">Simples</option>
+                                <option value="completa">Completa</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cliente</label>
+                            <select class="form-control" id="editarTipoCliente">
+                                <option value="">Selecione...</option>
+                                <option value="mensalista">Mensalista</option>
+                                <option value="avulso">Avulso</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="editarValor" step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Celular</label>
+                            <input type="tel" class="form-control" id="editarCelular">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observação</label>
+                            <textarea class="form-control" id="editarObservacao" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-info-custom w-100">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Veículo na Fila -->
+    <div class="modal fade modal-custom" id="modalEditarVeiculoFila" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-car me-2"></i>Editar Veículo na Fila
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formEditarVeiculoFila">
+                        <input type="hidden" id="editarVeiculoFilaId">
+                        <div class="mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="editarVeiculoPlaca" maxlength="7" style="text-transform: uppercase;">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control" id="editarVeiculoModelo">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cor</label>
+                            <input type="text" class="form-control" id="editarVeiculoCor">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <select class="form-control" id="editarVeiculoTipoLavagem">
+                                <option value="">Selecione...</option>
+                                <option value="simples">Simples</option>
+                                <option value="completa">Completa</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cliente</label>
+                            <select class="form-control" id="editarVeiculoTipoCliente">
+                                <option value="">Selecione...</option>
+                                <option value="mensalista">Mensalista</option>
+                                <option value="avulso">Avulso</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="editarVeiculoValor" step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Celular</label>
+                            <input type="tel" class="form-control" id="editarVeiculoCelular">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observação</label>
+                            <textarea class="form-control" id="editarVeiculoObservacao" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning-custom w-100">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Finalizar e Pagar -->
+    <div class="modal fade modal-custom" id="modalFinalizarPagar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                    <h5 class="modal-title">
+                        <i class="fas fa-check-circle me-2"></i>Finalizar e Pagar
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formFinalizarPagar">
+                        <input type="hidden" id="finalizarLavagemId">
+                        <div class="mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control" id="finalizarPlaca" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Modelo/Cor</label>
+                            <input type="text" class="form-control" id="finalizarModeloCor" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de Lavagem</label>
+                            <input type="text" class="form-control" id="finalizarTipo" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" class="form-control" id="finalizarValor" step="0.01" min="0">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Forma de Pagamento</label>
+                            <select class="form-control" id="finalizarFormaPagamento" required>
+                                <option value="">Selecione...</option>
+                                <option value="dinheiro">Dinheiro</option>
+                                <option value="pix">PIX</option>
+                                <option value="cartao">Cartão</option>
+                                <option value="transferencia">Transferência</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Observação Final</label>
+                            <textarea class="form-control" id="finalizarObservacao" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success-custom w-100">
+                            <i class="fas fa-check me-2"></i>Finalizar Lavagem e Registrar Pagamento
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Configuração Supabase
+        const SUPABASE_URL = 'https://emkiewosmlnyjnpujbui.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVta2lld29zbWxueWpucHVqYnVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4MDMxOTIsImV4cCI6MjA5MjM3OTE5Mn0.ohXoyqFJfyJxlyS1Efpykr0l0zezC2MZjVJWf55NV0c';
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Variáveis globais
+        let lavagens = [];
+        let filaLavagem = [];
+        let veiculos = [];
+        let clientes = [];
+
+        // Verificar login ao carregar
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            document.body.classList.add('loaded');
+            document.getElementById('userInfo').textContent = user.email;
+
+            await carregarDados();
+            atualizarStats();
+            verificarAlertas();
+        });
+
+        // Formulário de lavagem
+        document.getElementById('formLavagem').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await adicionarNaFila();
+        });
+
+        // Carregar dados do Supabase
+        async function carregarDados() {
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                // Carregar lavagens
+                const { data: lavagensData, error: lavagensError } = await supabaseClient
+                    .from('lavagens')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('data_lavagem', { ascending: false });
+
+                if (lavagensError) throw lavagensError;
+                lavagens = lavagensData || [];
+
+                // Carregar fila
+                const { data: filaData, error: filaError } = await supabaseClient
+                    .from('fila_lavagem')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('data_entrada', { ascending: true });
+
+                if (filaError) throw filaError;
+                filaLavagem = filaData || [];
+
+                // Carregar veículos
+                const { data: veiculosData, error: veiculosError } = await supabaseClient
+                    .from('veiculos')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('placa');
+
+                if (veiculosError) throw veiculosError;
+                veiculos = veiculosData || [];
+
+                // Carregar clientes
+                const { data: clientesData, error: clientesError } = await supabaseClient
+                    .from('clientes_estacionamento')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('status', 'ativo')
+                    .order('nome');
+
+                if (clientesError) throw clientesError;
+                clientes = clientesData || [];
+
+                renderizarHistorico();
+                renderizarFila();
+
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                showAlert('Erro ao carregar dados', 'danger');
+            }
+        }
+
+        // Adicionar na fila
+        async function adicionarNaFila() {
+            const placa = document.getElementById('placa').value.toUpperCase().trim();
+            const modelo = document.getElementById('modelo').value.trim();
+            const cor = document.getElementById('cor').value.trim();
+            const tipoLavagem = document.getElementById('tipoLavagem').value;
+            const tipoCliente = document.getElementById('tipoCliente').value;
+            const valor = parseFloat(document.getElementById('valor').value) || 0;
+            const celular = document.getElementById('celular').value.replace(/\D/g, '');
+            const observacao = document.getElementById('observacao').value.trim();
+
+            if (!placa) {
+                showAlert('Informe a placa!', 'warning');
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('fila_lavagem')
+                    .insert([{
+                        user_id: user.id,
+                        placa: placa,
+                        modelo: modelo,
+                        cor: cor,
+                        tipo_lavagem: tipoLavagem,
+                        tipo_cliente: tipoCliente,
+                        valor: valor,
+                        celular: celular,
+                        observacao: observacao,
+                        data_entrada: new Date().toISOString()
+                    }]);
+
+                if (error) {
+                    showAlert('Erro ao adicionar na fila: ' + error.message, 'danger');
+                    return;
+                }
+
+                showAlert('Veículo adicionado na fila!', 'success');
+                document.getElementById('formLavagem').reset();
+                await carregarDados();
+
+            } catch (error) {
+                console.error('Erro ao adicionar na fila:', error);
+                showAlert('Erro ao adicionar na fila', 'danger');
+            }
+        }
+
+        // Renderizar histórico
+        function renderizarHistorico() {
+            const tbody = document.getElementById('tabelaHistorico');
+            
+            if (lavagens.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Nenhuma lavagem registrada</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = lavagens.map(lavagem => `
+                <tr>
+                    <td>${formatarData(lavagem.data_lavagem)}</td>
+                    <td><strong>${lavagem.placa}</strong></td>
+                    <td>${lavagem.modelo || '-'} ${lavagem.cor || ''}</td>
+                    <td>${formatarTipoLavagem(lavagem.tipo_lavagem)}</td>
+                    <td>${formatarTipoCliente(lavagem.tipo_cliente)}</td>
+                    <td>R$ ${(lavagem.valor || 0).toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info-custom" onclick="editarLavagem('${lavagem.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger-custom" onclick="excluirLavagem('${lavagem.id}')" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Renderizar fila
+        function renderizarFila() {
+            const tbody = document.getElementById('tabelaFila');
+            
+            if (filaLavagem.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Nenhum veículo na fila</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filaLavagem.map(item => `
+                <tr>
+                    <td><strong>${item.placa}</strong></td>
+                    <td>${item.modelo || '-'} ${item.cor || ''}</td>
+                    <td>${formatarTipoLavagem(item.tipo_lavagem)}</td>
+                    <td>${formatarTipoCliente(item.tipo_cliente)}</td>
+                    <td>R$ ${(item.valor || 0).toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning-custom" onclick="editarVeiculoFila('${item.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-success-custom" onclick="finalizarEPagar('${item.id}')" title="Finalizar">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger-custom" onclick="removerDaFila('${item.id}')" title="Remover">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Atualizar estatísticas
+        function atualizarStats() {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            
+            const inicioSemana = new Date(hoje);
+            inicioSemana.setDate(hoje.getDate() - hoje.getDay());
+            
+            const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+            const lavagensHoje = lavagens.filter(l => {
+                const data = new Date(l.data_lavagem);
+                return data >= hoje;
+            });
+
+            const lavagensSemana = lavagens.filter(l => {
+                const data = new Date(l.data_lavagem);
+                return data >= inicioSemana;
+            });
+
+            const lavagensMes = lavagens.filter(l => {
+                const data = new Date(l.data_lavagem);
+                return data >= inicioMes;
+            });
+
+            const faturamentoMes = lavagensMes.reduce((sum, l) => sum + (l.valor || 0), 0);
+
+            document.getElementById('lavagensHoje').textContent = lavagensHoje.length;
+            document.getElementById('lavagensSemana').textContent = lavagensSemana.length;
+            document.getElementById('lavagensMes').textContent = lavagensMes.length;
+            document.getElementById('faturamentoMes').textContent = `R$ ${faturamentoMes.toFixed(0)}`;
+        }
+
+        // Verificar alertas
+        function verificarAlertas() {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            
+            const alertas = [];
+            
+            // Verificar veículos sem lavagem há mais de 30 dias
+            veiculos.forEach(veiculo => {
+                const ultimaLavagem = getUltimaLavagem(veiculo.placa);
+                
+                if (!ultimaLavagem) {
+                    // Nunca lavado
+                    const diasSemLavar = Math.floor((hoje - new Date(veiculo.created_at)) / (1000 * 60 * 60 * 24));
+                    
+                    if (diasSemLavar > 30) {
+                        alertas.push({
+                            placa: veiculo.placa,
+                            modelo: veiculo.modelo,
+                            cor: veiculo.cor,
+                            dias: diasSemLavar,
+                            ultimaLavagem: null,
+                            cliente: getClientePorVeiculo(veiculo.placa)
+                        });
+                    }
+                } else {
+                    // Já foi lavado alguma vez
+                    const diasSemLavar = Math.floor((hoje - new Date(ultimaLavagem.data_lavagem)) / (1000 * 60 * 60 * 24));
+                    
+                    if (diasSemLavar > 30) {
+                        alertas.push({
+                            placa: veiculo.placa,
+                            modelo: veiculo.modelo,
+                            cor: veiculo.cor,
+                            dias: diasSemLavar,
+                            ultimaLavagem: ultimaLavagem.data_lavagem,
+                            cliente: getClientePorVeiculo(veiculo.placa)
+                        });
+                    }
+                }
+            });
+
+            // Renderizar alertas
+            const secao = document.getElementById('secaoAlertas');
+            const lista = document.getElementById('listaAlertas');
+            const total = document.getElementById('totalAlertas');
+
+            if (alertas.length === 0) {
+                secao.style.display = 'none';
+                return;
+            }
+
+            secao.style.display = 'block';
+            total.textContent = alertas.length;
+
+            lista.innerHTML = alertas.map(a => `
+                <div class="alerta-item">
+                    <div>
+                        <strong>${a.placa}</strong> - ${a.modelo || ''} ${a.cor || ''}
+                        <span class="badge badge-dias ms-2">${a.dias} dias</span>
+                        <br>
+                        <small>Cliente: ${a.cliente || 'Não identificado'}</small>
+                        ${a.ultimaLavagem ? `<br><small>Última lavagem: ${formatarData(a.ultimaLavagem)}</small>` : '<br><small>Nunca foi lavado</small>'}
+                    </div>
+                    <button class="btn btn-whatsapp btn-sm" onclick="abrirWhatsAppLavagem('${a.placa}', ${a.dias})">
+                        <i class="bi bi-whatsapp me-1"></i>Enviar
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // Obter última lavagem de um veículo
+        function getUltimaLavagem(placa) {
+            const lavagensVeiculo = lavagens.filter(l => l.placa === placa);
+            if (lavagensVeiculo.length === 0) return null;
+            
+            return lavagensVeiculo.reduce((maisRecente, lavagem) => {
+                return new Date(lavagem.data_lavagem) > new Date(maisRecente.data_lavagem) ? lavagem : maisRecente;
+            });
+        }
+
+        // Obter cliente por veículo
+        function getClientePorVeiculo(placa) {
+            const veiculo = veiculos.find(v => v.placa === placa);
+            if (!veiculo) return null;
+            
+            const cliente = clientes.find(c => c.id === veiculo.cliente_id);
+            return cliente ? cliente.nome : null;
+        }
+
+        // Abrir WhatsApp para alerta de lavagem
+        function abrirWhatsAppLavagem(placa, dias) {
+            const mensagem = `Olá! Seu veículo de placa ${placa} está há ${dias} dias sem lavagem. Que agendar uma lavagem?`;
+            const url = `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
+        // Editar lavagem
+        function editarLavagem(lavagemId) {
+            const lavagem = lavagens.find(l => l.id === lavagemId);
+            if (!lavagem) return;
+
+            document.getElementById('editarLavagemId').value = lavagem.id;
+            document.getElementById('editarPlaca').value = lavagem.placa;
+            document.getElementById('editarModelo').value = lavagem.modelo || '';
+            document.getElementById('editarCor').value = lavagem.cor || '';
+            document.getElementById('editarTipoLavagem').value = lavagem.tipo_lavagem || '';
+            document.getElementById('editarTipoCliente').value = lavagem.tipo_cliente || '';
+            document.getElementById('editarValor').value = lavagem.valor || 0;
+            document.getElementById('editarCelular').value = lavagem.celular || '';
+            document.getElementById('editarObservacao').value = lavagem.observacao || '';
+
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarLavagem'));
+            modal.show();
+        }
+
+        // Formulário de edição de lavagem
+        document.getElementById('formEditarLavagem').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await salvarEdicaoLavagem();
+        });
+
+        // Salvar edição de lavagem
+        async function salvarEdicaoLavagem() {
+            const lavagemId = document.getElementById('editarLavagemId').value;
+            const placa = document.getElementById('editarPlaca').value.toUpperCase().trim();
+            const modelo = document.getElementById('editarModelo').value.trim();
+            const cor = document.getElementById('editarCor').value.trim();
+            const tipoLavagem = document.getElementById('editarTipoLavagem').value;
+            const tipoCliente = document.getElementById('editarTipoCliente').value;
+            const valor = parseFloat(document.getElementById('editarValor').value) || 0;
+            const celular = document.getElementById('editarCelular').value.replace(/\D/g, '');
+            const observacao = document.getElementById('editarObservacao').value.trim();
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('lavagens')
+                    .update({
+                        placa: placa,
+                        modelo: modelo,
+                        cor: cor,
+                        tipo_lavagem: tipoLavagem,
+                        tipo_cliente: tipoCliente,
+                        valor: valor,
+                        celular: celular,
+                        observacao: observacao
+                    })
+                    .eq('id', lavagemId)
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    showAlert('Erro ao salvar alterações: ' + error.message, 'danger');
+                    return;
+                }
+
+                showAlert('Lavagem atualizada com sucesso!', 'success');
+                
+                // Fechar modal e recarregar dados
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarLavagem'));
+                modal.hide();
+                
+                await carregarDados();
+                atualizarStats();
+
+            } catch (error) {
+                console.error('Erro ao salvar edição:', error);
+                showAlert('Erro ao salvar edição', 'danger');
+            }
+        }
+
+        // Excluir lavagem
+        async function excluirLavagem(lavagemId) {
+            if (!confirm('Tem certeza que deseja excluir esta lavagem?')) {
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('lavagens')
+                    .delete()
+                    .eq('id', lavagemId)
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    showAlert('Erro ao excluir lavagem: ' + error.message, 'danger');
+                    return;
+                }
+
+                showAlert('Lavagem excluída!', 'success');
+                await carregarDados();
+                atualizarStats();
+
+            } catch (error) {
+                console.error('Erro ao excluir lavagem:', error);
+                showAlert('Erro ao excluir lavagem', 'danger');
+            }
+        }
+
+        // Editar veículo na fila
+        function editarVeiculoFila(filaId) {
+            const item = filaLavagem.find(f => f.id === filaId);
+            if (!item) return;
+
+            document.getElementById('editarVeiculoFilaId').value = item.id;
+            document.getElementById('editarVeiculoPlaca').value = item.placa;
+            document.getElementById('editarVeiculoModelo').value = item.modelo || '';
+            document.getElementById('editarVeiculoCor').value = item.cor || '';
+            document.getElementById('editarVeiculoTipoLavagem').value = item.tipo_lavagem || '';
+            document.getElementById('editarVeiculoTipoCliente').value = item.tipo_cliente || '';
+            document.getElementById('editarVeiculoValor').value = item.valor || 0;
+            document.getElementById('editarVeiculoCelular').value = item.celular || '';
+            document.getElementById('editarVeiculoObservacao').value = item.observacao || '';
+
+            const modal = new bootstrap.Modal(document.getElementById('modalEditarVeiculoFila'));
+            modal.show();
+        }
+
+        // Formulário de edição de veículo na fila
+        document.getElementById('formEditarVeiculoFila').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await salvarEdicaoVeiculoFila();
+        });
+
+        // Salvar edição de veículo na fila
+        async function salvarEdicaoVeiculoFila() {
+            const filaId = document.getElementById('editarVeiculoFilaId').value;
+            const placa = document.getElementById('editarVeiculoPlaca').value.toUpperCase().trim();
+            const modelo = document.getElementById('editarVeiculoModelo').value.trim();
+            const cor = document.getElementById('editarVeiculoCor').value.trim();
+            const tipoLavagem = document.getElementById('editarVeiculoTipoLavagem').value;
+            const tipoCliente = document.getElementById('editarVeiculoTipoCliente').value;
+            const valor = parseFloat(document.getElementById('editarVeiculoValor').value) || 0;
+            const celular = document.getElementById('editarVeiculoCelular').value.replace(/\D/g, '');
+            const observacao = document.getElementById('editarVeiculoObservacao').value.trim();
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('fila_lavagem')
+                    .update({
+                        placa: placa,
+                        modelo: modelo,
+                        cor: cor,
+                        tipo_lavagem: tipoLavagem,
+                        tipo_cliente: tipoCliente,
+                        valor: valor,
+                        celular: celular,
+                        observacao: observacao
+                    })
+                    .eq('id', filaId)
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    showAlert('Erro ao salvar alterações: ' + error.message, 'danger');
+                    return;
+                }
+
+                showAlert('Veículo atualizado na fila!', 'success');
+                
+                // Fechar modal e recarregar dados
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarVeiculoFila'));
+                modal.hide();
+                
+                await carregarDados();
+
+            } catch (error) {
+                console.error('Erro ao salvar edição:', error);
+                showAlert('Erro ao salvar edição', 'danger');
+            }
+        }
+
+        // Finalizar e pagar
+        function finalizarEPagar(filaId) {
+            const item = filaLavagem.find(f => f.id === filaId);
+            if (!item) return;
+
+            document.getElementById('finalizarLavagemId').value = item.id;
+            document.getElementById('finalizarPlaca').value = item.placa;
+            document.getElementById('finalizarModeloCor').value = `${item.modelo || ''} ${item.cor || ''}`;
+            document.getElementById('finalizarTipo').value = formatarTipoLavagem(item.tipo_lavagem);
+            document.getElementById('finalizarValor').value = item.valor || 0;
+            document.getElementById('finalizarFormaPagamento').value = '';
+            document.getElementById('finalizarObservacao').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('modalFinalizarPagar'));
+            modal.show();
+        }
+
+        // Formulário de finalizar e pagar
+        document.getElementById('formFinalizarPagar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await finalizarLavagemEPagar();
+        });
+
+        // Finalizar lavagem e registrar pagamento
+        async function finalizarLavagemEPagar() {
+            const filaId = document.getElementById('finalizarLavagemId').value;
+            const valor = parseFloat(document.getElementById('finalizarValor').value) || 0;
+            const formaPagamento = document.getElementById('finalizarFormaPagamento').value;
+            const observacao = document.getElementById('finalizarObservacao').value.trim();
+
+            if (!formaPagamento) {
+                showAlert('Selecione a forma de pagamento!', 'warning');
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                // Buscar dados do veículo na fila
+                const item = filaLavagem.find(f => f.id === filaId);
+                if (!item) return;
+
+                // Inserir lavagem no histórico
+                const { error: lavagemError } = await supabaseClient
+                    .from('lavagens')
+                    .insert([{
+                        user_id: user.id,
+                        placa: item.placa,
+                        modelo: item.modelo,
+                        cor: item.cor,
+                        tipo_lavagem: item.tipo_lavagem,
+                        tipo_cliente: item.tipo_cliente,
+                        valor: valor,
+                        celular: item.celular,
+                        observacao: item.observacao,
+                        data_lavagem: new Date().toISOString(),
+                        forma_pagamento: formaPagamento,
+                        observacao_final: observacao
+                    }]);
+
+                if (lavagemError) throw lavagemError;
+
+                // Remover da fila
+                const { error: filaError } = await supabaseClient
+                    .from('fila_lavagem')
+                    .delete()
+                    .eq('id', filaId)
+                    .eq('user_id', user.id);
+
+                if (filaError) throw filaError;
+
+                showAlert('Lavagem finalizada e pagamento registrado!', 'success');
+                
+                // Fechar modal e recarregar dados
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalFinalizarPagar'));
+                modal.hide();
+                
+                await carregarDados();
+                atualizarStats();
+
+            } catch (error) {
+                console.error('Erro ao finalizar lavagem:', error);
+                showAlert('Erro ao finalizar lavagem', 'danger');
+            }
+        }
+
+        // Remover da fila
+        async function removerDaFila(filaId) {
+            if (!confirm('Tem certeza que deseja remover este veículo da fila?')) {
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('currentUser'));
+            if (!user) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('fila_lavagem')
+                    .delete()
+                    .eq('id', filaId)
+                    .eq('user_id', user.id);
+
+                if (error) {
+                    showAlert('Erro ao remover da fila: ' + error.message, 'danger');
+                    return;
+                }
+
+                showAlert('Veículo removido da fila!', 'success');
+                await carregarDados();
+
+            } catch (error) {
+                console.error('Erro ao remover da fila:', error);
+                showAlert('Erro ao remover da fila', 'danger');
+            }
+        }
+
+        // Filtrar histórico
+        function filtrarHistorico() {
+            const dataInicial = document.getElementById('filtroDataInicial').value;
+            const dataFinal = document.getElementById('filtroDataFinal').value;
+            const tipoCliente = document.getElementById('filtroTipoCliente').value;
+
+            let lavagensFiltradas = [...lavagens];
+
+            if (dataInicial) {
+                lavagensFiltradas = lavagensFiltradas.filter(l => 
+                    new Date(l.data_lavagem) >= new Date(dataInicial + 'T00:00:00')
+                );
+            }
+
+            if (dataFinal) {
+                lavagensFiltradas = lavagensFiltradas.filter(l => 
+                    new Date(l.data_lavagem) <= new Date(dataFinal + 'T23:59:59')
+                );
+            }
+
+            if (tipoCliente) {
+                lavagensFiltradas = lavagensFiltradas.filter(l => l.tipo_cliente === tipoCliente);
+            }
+
+            // Renderizar tabela filtrada
+            const tbody = document.getElementById('tabelaHistorico');
+            
+            if (lavagensFiltradas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>Nenhuma lavagem encontrada com os filtros selecionados</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = lavagensFiltradas.map(lavagem => `
+                <tr>
+                    <td>${formatarData(lavagem.data_lavagem)}</td>
+                    <td><strong>${lavagem.placa}</strong></td>
+                    <td>${lavagem.modelo || '-'} ${lavagem.cor || ''}</td>
+                    <td>${formatarTipoLavagem(lavagem.tipo_lavagem)}</td>
+                    <td>${formatarTipoCliente(lavagem.tipo_cliente)}</td>
+                    <td>R$ ${(lavagem.valor || 0).toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info-custom" onclick="editarLavagem('${lavagem.id}')" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger-custom" onclick="excluirLavagem('${lavagem.id}')" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Imprimir recibo de lavagem
+        function imprimirReciboLavagem() {
+            const placa = document.getElementById('placa').value.toUpperCase().trim();
+            const modelo = document.getElementById('modelo').value.trim();
+            const cor = document.getElementById('cor').value.trim();
+            const tipo = document.getElementById('tipoLavagem').value;
+            const tipoCliente = document.getElementById('tipoCliente').value;
+            const valor = document.getElementById('valor').value || 0;
+            const celular = document.getElementById('celular').value;
+            const obs = document.getElementById('observacao').value.trim();
+
+            if (!placa) {
+                showAlert('Preencha a placa para imprimir o recibo!', 'warning');
+                return;
+            }
+
+            const dataAtual = new Date().toLocaleDateString('pt-BR');
+            const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+            const tiposLavagem = {
+                'simples': 'Simples',
+                'completa': 'Completa',
+                'premium': 'Premium'
+            };
+
+            // Criar conteúdo do recibo
+            const reciboContent = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 400px; margin: 0 auto;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                        <h2 style="margin: 0; color: #333;">RECIBO DE LAVAGEM</h2>
+                        <p style="margin: 5px 0; color: #666;">Estacionamento</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <p style="margin: 5px 0;"><strong>Data:</strong> ${dataAtual} - ${horaAtual}</p>
+                        <p style="margin: 5px 0;"><strong>Placa:</strong> ${placa.toUpperCase()}</p>
+                        <p style="margin: 5px 0;"><strong>Veículo:</strong> ${modelo || '-'} ${cor || '-'}</p>
+                        <p style="margin: 5px 0;"><strong>Tipo:</strong> ${tiposLavagem[tipo] || tipo}</p>
+                        <p style="margin: 5px 0;"><strong>Cliente:</strong> ${tipoCliente === 'mensalista' ? 'Mensalista' : 'Avulso'}</p>
+                        ${celular ? `<p style="margin: 5px 0;"><strong>Celular:</strong> ${celular}</p>` : ''}
+                        ${obs ? `<p style="margin: 5px 0;"><strong>Obs:</strong> ${obs}</p>` : ''}
+                    </div>
+                    
+                    <div style="border: 2px solid #333; padding: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 18px; font-weight: bold;">VALOR:</span>
+                            <span style="font-size: 24px; font-weight: bold; color: #333;">R$ ${parseFloat(valor).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px;">
+                        <div style="border-top: 1px solid #999; padding-top: 10px; margin-bottom: 20px;">
+                            <p style="margin: 0; font-size: 12px; color: #666;">Assinatura do Cliente</p>
+                            <div style="height: 40px; border-bottom: 1px solid #999; margin-top: 20px;"></div>
+                        </div>
+                        
+                        <div style="margin-top: 30px;">
+                            <p style="margin: 0; font-size: 10px; color: #999;">
+                                * Recibo válido para comprovação de serviço<br>
+                                * Não duplicável sem assinatura
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Abrir janela de impressão
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Recibo de Lavagem - ${placa.toUpperCase()}</title>
+                    <style>
+                        @media print {
+                            body { margin: 0; }
+                            @page { margin: 10mm; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${reciboContent}
+                    <script>
+                        window.onload = function() {
+                            window.print();
+                            window.close();
+                        }
+                    </script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+        
+        // Funções auxiliares
+        function formatarData(data) {
+            if (!data) return '-';
+            return new Date(data).toLocaleDateString('pt-BR');
+        }
+
+        function formatarTipoLavagem(tipo) {
+            const tipos = {
+                'simples': 'Simples',
+                'completa': 'Completa',
+                'premium': 'Premium'
+            };
+            return tipos[tipo] || tipo || '-';
+        }
+
+        function formatarTipoCliente(tipo) {
+            const tipos = {
+                'mensalista': 'Mensalista',
+                'avulso': 'Avulso'
+            };
+            return tipos[tipo] || tipo || '-';
+        }
+
+        // Mostrar alertas
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
