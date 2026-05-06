@@ -798,6 +798,7 @@
         let lavagens = [];
         let pagamentos = [];
         let filtroAtual = '';
+        let historicoClienteAtual = { id: null, nome: null }; // Para reabrir modal após exclusão
 
         // Verificar login ao carregar
         document.addEventListener('DOMContentLoaded', async () => {
@@ -2152,6 +2153,9 @@
         async function abrirHistoricoPagamentos(clienteId, nome) {
             const cliente = clientes.find(c => c.id === clienteId);
             if (!cliente) return;
+            
+            // Armazenar para reabrir modal após exclusão
+            historicoClienteAtual = { id: clienteId, nome: nome };
 
             let pagamentosCliente = [];
             
@@ -2470,17 +2474,26 @@
                 }
 
                 showAlert('Pagamento excluído com sucesso!', 'success');
+                
                 await carregarDados();
+                
                 // Reaplicar busca se houver termo de busca
                 const campoBusca = document.getElementById('campoBusca');
                 if (campoBusca && campoBusca.value.trim()) {
                     filtrarClientes();
                 }
-
-                // Reabrir modal para atualizar
-                const modal = bootstrap.Modal.getInstance(document.getElementById('modalHistoricoPagamentos'));
+                
+                // Fechar e reabrir modal para atualizar o histórico
+                const modalElement = document.getElementById('modalHistoricoPagamentos');
+                const modal = bootstrap.Modal.getInstance(modalElement);
                 if (modal) {
                     modal.hide();
+                    // Reabrir após um pequeno delay usando a variável global
+                    setTimeout(() => {
+                        if (historicoClienteAtual.id && historicoClienteAtual.nome) {
+                            abrirHistoricoPagamentos(historicoClienteAtual.id, historicoClienteAtual.nome);
+                        }
+                    }, 300);
                 }
 
             } catch (error) {
