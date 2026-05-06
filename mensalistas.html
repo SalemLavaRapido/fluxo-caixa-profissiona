@@ -929,36 +929,8 @@
                     if (!pagamentosError) {
                         pagamentos = pagamentosData || [];
                     } else {
-                        console.warn('Tabela pagamentos não encontrada, buscando das entradas');
+                        console.warn('Tabela pagamentos não encontrada, continuando sem ela');
                         pagamentos = [];
-                        
-                        // Buscar pagamentos da tabela entradas (categoria mensalista)
-                        const { data: entradasData } = await supabaseClient
-                            .from('entradas')
-                            .select('*')
-                            .eq('user_id', user.id)
-                            .eq('categoria', 'mensalista')
-                            .order('data', { ascending: false });
-                        
-                        if (entradasData) {
-                            // Converter entradas para formato de pagamentos
-                            pagamentos = entradasData.map(e => {
-                                // Extrair informações da descrição
-                                const nomeMatch = e.descricao.match(/Mensalidade - (.+?) \(/);
-                                const mesMatch = e.descricao.match(/\(([^)]+)\)/);
-                                
-                                return {
-                                    id: e.id,
-                                    cliente_id: null, // Não tem cliente_id direto na entradas
-                                    mes_referencia: mesMatch ? mesMatch[1] : 'N/A',
-                                    valor: e.valor,
-                                    forma_pagamento: e.forma_pagamento,
-                                    data_pagamento: e.data,
-                                    descricao: e.descricao,
-                                    cliente_nome: nomeMatch ? nomeMatch[1] : 'Cliente'
-                                };
-                            });
-                        }
                     }
                 } catch (e) {
                     console.warn('Erro ao carregar pagamentos:', e);
@@ -992,10 +964,7 @@
 
             container.innerHTML = clientes.map(cliente => {
                 const veiculosCliente = veiculos.filter(v => v.cliente_id === cliente.id);
-                const pagamentosCliente = pagamentos.filter(p => 
-                    p.cliente_id === cliente.id || 
-                    (p.cliente_nome && p.cliente_nome.toLowerCase() === cliente.nome.toLowerCase())
-                );
+                const pagamentosCliente = pagamentos.filter(p => p.cliente_id === cliente.id);
                 const lavagensCliente = getLavagensCliente(veiculosCliente);
 
                 return `
@@ -1407,7 +1376,7 @@
                 // Verificar se cliente já pagou no mês atual
                 const mesAtualStr = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}`;
                 const pagamentosCliente = pagamentos.filter(p => 
-                    (p.cliente_id === cliente.id || (p.cliente_nome && p.cliente_nome.toLowerCase() === cliente.nome.toLowerCase())) && 
+                    p.cliente_id === cliente.id && 
                     p.mes_referencia === mesAtualStr
                 );
                 
@@ -2052,7 +2021,7 @@
                             .from('entradas')
                             .select('*')
                             .eq('user_id', user.id)
-                            .eq('categoria', 'mensalista')
+                            .eq('categoria', 'Mensalista')
                             .like('descricao', '%' + nome + '%')
                             .order('data', { ascending: false });
                         
