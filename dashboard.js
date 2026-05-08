@@ -11,6 +11,11 @@ class DashboardSystem {
         await this.atualizarResumo();
         await this.criarGraficoMensal();
         this.configurarDatasPadrao();
+        
+        // Carregar contas a pagar
+        if (typeof carregarContasPagar === 'function') {
+            await carregarContasPagar();
+        }
     }
 
     // Atualizar resumo financeiro
@@ -26,7 +31,7 @@ class DashboardSystem {
             const saldoFinal = totalEntradas - totalSaidas;
 
             // Calcular percentual de crescimento
-            const percentualCrescimento = totalSaidas > 0 ? 
+            const percentualCrescimento = totalSaidas > 0 ?
                 ((totalEntradas - totalSaidas) / totalSaidas * 100) : 0;
 
             // Atualizar cards
@@ -43,6 +48,16 @@ class DashboardSystem {
 
             // Atualizar gráficos
             await this.atualizarGraficos();
+            
+            // Renderizar tabela única de saídas
+            if (saidasSystem && saidasSystem.renderizarTabela) {
+                await saidasSystem.renderizarTabela();
+            }
+
+            // Carregar contas a pagar usando os mesmos filtros do dashboard
+            if (typeof carregarContasPagar === 'function') {
+                await carregarContasPagar(filtros);
+            }
 
         } catch (error) {
             console.error('Erro ao atualizar resumo:', error);
