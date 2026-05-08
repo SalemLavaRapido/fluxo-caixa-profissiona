@@ -2066,6 +2066,17 @@
             }).join('');
         }
 
+        // Abrir WhatsApp com mensagem pré-preenchida
+        function abrirWhatsAppAgenda(telefone, mensagem) {
+            // Limpar telefone (só números) e adicionar +55 se faltar
+            let numero = String(telefone).replace(/\D/g, '');
+            if (numero.length >= 10 && !numero.startsWith('55')) {
+                numero = '55' + numero;
+            }
+            const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
+            window.open(url, '_blank');
+        }
+
         function cardAgendamento(a) {
             const dt = new Date(a.data_agendada);
             const hora = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -2074,7 +2085,18 @@
                 'concluido': '<span class="badge bg-success">Concluído</span>',
                 'cancelado': '<span class="badge bg-secondary">Cancelado</span>'
             }[a.status] || '';
+            // Botão WhatsApp (aparece se tiver telefone)
+            const dataFmt = dt.toLocaleDateString('pt-BR');
+            const horaFmt = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const msgWhats = `Olá ${a.cliente_nome || ''}! Lembrete do seu agendamento de lavagem (${a.tipo_lavagem || ''}) para o veículo ${a.placa} no dia ${dataFmt} às ${horaFmt}. Aguardamos você!`;
+            const btnWhats = a.telefone ? `
+                <button class="btn btn-sm" style="background:#25D366; color:#fff;"
+                    onclick="abrirWhatsAppAgenda('${a.telefone}', \`${msgWhats.replace(/`/g, '').replace(/'/g, "\\'")}\`)" title="Enviar WhatsApp">
+                    <i class="bi bi-whatsapp"></i>
+                </button>` : '';
+
             const acoes = a.status === 'agendado' ? `
+                ${btnWhats}
                 <button class="btn btn-sm btn-success" onclick="concluirAgendamento('${a.id}')" title="Concluir e enviar pra fila">
                     <i class="fas fa-check"></i>
                 </button>
@@ -2087,6 +2109,7 @@
                 <button class="btn btn-sm btn-danger" onclick="excluirAgendamento('${a.id}')" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>` : `
+                ${btnWhats}
                 <button class="btn btn-sm btn-danger" onclick="excluirAgendamento('${a.id}')" title="Excluir">
                     <i class="fas fa-trash"></i>
                 </button>`;
