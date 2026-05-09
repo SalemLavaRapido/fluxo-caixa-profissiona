@@ -379,12 +379,18 @@
 
             .d-flex.gap-2, .d-flex.gap-3 { flex-wrap: wrap; }
 
-            /* Form Registrar Lavagem: empilhar campos verticalmente no mobile */
+            /* Form Registrar Lavagem: 2 colunas no mobile (mais compacto) */
             #formLavagem > .col {
-                flex: 0 0 100% !important;
-                max-width: 100% !important;
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
                 margin-bottom: 8px;
             }
+            /* Botões em largura total no mobile */
+            #formLavagem > .col-auto {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+            #formLavagem > .col-auto .btn { width: 100%; }
         }
 
         @media (max-width: 430px) {
