@@ -572,15 +572,24 @@
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="dashboard-card warning fade-in">
+                    <div class="dashboard-card warning fade-in" style="position: relative;">
                         <div class="card-icon">
                             <i class="fas fa-file-invoice-dollar"></i>
                         </div>
                         <h3 id="totalContasPagar">R$ 0,00</h3>
                         <p>Contas a Pagar</p>
                         <small id="qtdContasPendentes" style="opacity: 0.8;">0 pendentes</small>
+                        <span id="badgeVencendo" class="badge bg-danger" style="display:none; position:absolute; top:10px; right:10px; font-size:0.85rem;">
+                            <i class="fas fa-bell me-1"></i><span id="badgeVencendoQtd">0</span>
+                        </span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Alerta de Contas Próximas do Vencimento -->
+            <div id="alertaVencimentos" class="alert alert-warning fade-in" style="display:none;">
+                <h5 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Lembretes de Vencimento</h5>
+                <div id="listaAlertaVencimentos"></div>
             </div>
 
             
@@ -1316,6 +1325,14 @@
                 if (!userStr) return;
                 const user = JSON.parse(userStr);
 
+                // Se não recebeu filtros, lê automaticamente do dashboard
+                if (!filtros.dataInicio && !filtros.dataFim) {
+                    const dataInicioEl = document.getElementById('dataInicio');
+                    const dataFimEl    = document.getElementById('dataFim');
+                    if (dataInicioEl && dataInicioEl.value) filtros.dataInicio = dataInicioEl.value;
+                    if (dataFimEl    && dataFimEl.value)    filtros.dataFim    = dataFimEl.value;
+                }
+
                 // Usar os mesmos filtros de data do dashboard
                 let query = supabaseClient
                     .from('saidas')
@@ -1338,7 +1355,16 @@
             }
         }
 
-        // Atualizar card do dashboard (somente exibição, sem clique)
+        // Calcular dias até vencimento (negativo = vencida)
+        function diasAteVencimento(dataVencimento) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const venc = new Date(dataVencimento);
+            venc.setHours(0, 0, 0, 0);
+            return Math.round((venc - hoje) / (1000 * 60 * 60 * 24));
+        }
+
+        // Atualizar card do dashboard + badge + alerta de vencimentos
         function atualizarCardContasPagar() {
             const total = contasPagar.reduce((sum, conta) => sum + parseFloat(conta.valor || 0), 0);
             const totalFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(total);
@@ -1346,6 +1372,60 @@
             const elQtd   = document.getElementById('qtdContasPendentes');
             if (elTotal) elTotal.textContent = totalFmt;
             if (elQtd)   elQtd.textContent = `${contasPagar.length} pendente(s)`;
+
+            // Filtrar contas vencidas/vencendo nos próximos 3 dias
+            const proximas = contasPagar.filter(c => {
+                const dias = diasAteVencimento(c.data_vencimento);
+                return dias <= 3;
+            });
+
+            // Atualizar badge no card
+            const badge = document.getElementById('badgeVencendo');
+            const badgeQtd = document.getElementById('badgeVencendoQtd');
+            if (badge && badgeQtd) {
+                if (proximas.length > 0) {
+                    badge.style.display = 'inline-block';
+                    badgeQtd.textContent = proximas.length;
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
+            // Renderizar alerta no topo
+            const alerta = document.getElementById('alertaVencimentos');
+            const lista  = document.getElementById('listaAlertaVencimentos');
+            if (!alerta || !lista) return;
+
+            if (proximas.length === 0) {
+                alerta.style.display = 'none';
+                return;
+            }
+
+            // Ordenar por data de vencimento
+            proximas.sort((a, b) => new Date(a.data_vencimento) - new Date(b.data_vencimento));
+
+            lista.innerHTML = proximas.map(c => {
+                const dias = diasAteVencimento(c.data_vencimento);
+                let texto, cor;
+                if (dias < 0) {
+                    texto = `VENCIDA há ${Math.abs(dias)} dia(s)`;
+                    cor = 'text-danger fw-bold';
+                } else if (dias === 0) {
+                    texto = 'VENCE HOJE';
+                    cor = 'text-danger fw-bold';
+                } else if (dias === 1) {
+                    texto = 'Vence amanhã';
+                    cor = 'text-warning fw-bold';
+                } else {
+                    texto = `Vence em ${dias} dias`;
+                    cor = 'text-warning';
+                }
+                const dataFmt = new Date(c.data_vencimento).toLocaleDateString('pt-BR');
+                const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(c.valor);
+                return `<div class="mb-1"><span class="${cor}">${texto}</span> &mdash; <strong>${c.descricao}</strong> (${c.categoria}) &mdash; ${valorFmt} &mdash; <small>${dataFmt}</small></div>`;
+            }).join('');
+
+            alerta.style.display = 'block';
         }
 
         // Renderizar lista de contas
@@ -1378,12 +1458,27 @@
                         : tipo === 'variavel'
                         ? '<span class="badge bg-warning text-dark">Variável</span>'
                         : '<span class="badge bg-secondary">-</span>'; // Para valores inesperados
+
+                    // Destacar linha conforme proximidade do vencimento
+                    const dias = diasAteVencimento(conta.data_vencimento);
+                    let rowStyle = '';
+                    let vencInfo = '';
+                    if (dias < 0) {
+                        rowStyle = 'background-color: #f8d7da;';
+                        vencInfo = `<br><small class="text-danger fw-bold"><i class="fas fa-exclamation-circle"></i> Vencida há ${Math.abs(dias)} dia(s)</small>`;
+                    } else if (dias === 0) {
+                        rowStyle = 'background-color: #f8d7da;';
+                        vencInfo = `<br><small class="text-danger fw-bold"><i class="fas fa-bell"></i> VENCE HOJE</small>`;
+                    } else if (dias <= 3) {
+                        rowStyle = 'background-color: #fff3cd;';
+                        vencInfo = `<br><small class="text-warning fw-bold"><i class="fas fa-clock"></i> Vence em ${dias} dia(s)</small>`;
+                    }
                 return `
-                <tr>
+                <tr style="${rowStyle}">
                     <td>${conta.descricao}</td>
                     <td><span class="badge bg-info">${conta.categoria}</span></td>
                     <td>${tipoBadge}</td>
-                    <td>${new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}</td>
+                    <td>${new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}${vencInfo}</td>
                     <td class="text-danger fw-bold">R$ ${conta.valor.toFixed(2)}</td>
                     <td>
                         <button class="btn btn-success btn-sm" onclick="marcarComoPago('${conta.id}', '${conta.descricao}', ${conta.valor}, '${conta.categoria}')">
@@ -1497,6 +1592,18 @@
                 alert('Erro ao marcar como pago: ' + error.message);
             }
         }
+
+        // Carregar contas a pagar automaticamente ao abrir a página (para alertas/badge)
+        document.addEventListener('DOMContentLoaded', () => {
+            const tryLoad = setInterval(() => {
+                if (typeof authSystem !== 'undefined' && authSystem.isLoggedIn && authSystem.isLoggedIn()) {
+                    clearInterval(tryLoad);
+                    carregarContasPagar();
+                }
+            }, 500);
+            // Para de tentar após 30s
+            setTimeout(() => clearInterval(tryLoad), 30000);
+        });
     </script>
 </body>
 </html>
