@@ -492,7 +492,7 @@
                 });
             });
 
-            // 2) Lavagens (chave: celular)
+            // 2) Lavagens (chave: celular, senão placa)
             lavagens.forEach(l => {
                 const chave = l.celular || l.placa;
                 if (!chave) return;
@@ -501,6 +501,7 @@
                 if (!c) return;
                 if (l.placa) c.placas.add(l.placa.toUpperCase());
                 if (!c.telefone && l.celular) c.telefone = l.celular;
+                if (!c.nome && l.cliente_nome) c.nome = l.cliente_nome;
                 c.tipos.add('lavagem');
                 c.visitas++;
                 c.totalGasto += parseFloat(l.valor || 0);

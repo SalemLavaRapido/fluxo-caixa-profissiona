@@ -485,6 +485,10 @@
                            placeholder="PLACA" maxlength="7" style="text-transform: uppercase;" required>
                 </div>
                 <div class="col">
+                    <input type="text" class="form-control form-control-custom" id="nomeLavagem" 
+                           placeholder="Nome do Cliente">
+                </div>
+                <div class="col">
                     <input type="text" class="form-control form-control-custom" id="modeloLavagem" 
                            placeholder="Modelo">
                 </div>
@@ -595,6 +599,7 @@
                             <thead>
                                 <tr>
                                     <th><i class="fas fa-car me-2"></i>Placa</th>
+                                    <th><i class="fas fa-user me-2"></i>Nome</th>
                                     <th><i class="fas fa-car-side me-2"></i>Modelo</th>
                                     <th><i class="fas fa-palette me-2"></i>Cor</th>
                                     <th><i class="fas fa-tag me-2"></i>Tipo Cliente</th>
@@ -633,6 +638,7 @@
                                 <tr>
                                     <th>#</th>
                                     <th><i class="fas fa-car me-2"></i>Placa</th>
+                                    <th><i class="fas fa-user me-2"></i>Nome</th>
                                     <th><i class="fas fa-car-side me-2"></i>Modelo</th>
                                     <th><i class="fas fa-palette me-2"></i>Cor</th>
                                     <th><i class="fas fa-tag me-2"></i>Cliente</th>
@@ -795,10 +801,16 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="editarLavagemId">
-                    <div class="mb-3">
-                        <label class="form-label">Placa</label>
-                        <input type="text" class="form-control form-control-custom" id="editarLavagemPlaca" 
-                               maxlength="7" style="text-transform: uppercase;">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Placa</label>
+                            <input type="text" class="form-control form-control-custom" id="editarLavagemPlaca" 
+                                   maxlength="7" style="text-transform: uppercase;">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome do Cliente</label>
+                            <input type="text" class="form-control form-control-custom" id="editarLavagemNome">
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -874,15 +886,21 @@
                                    maxlength="7" style="text-transform: uppercase;">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Modelo</label>
-                            <input type="text" class="form-control form-control-custom" id="editarFilaModelo">
+                            <label class="form-label">Nome do Cliente</label>
+                            <input type="text" class="form-control form-control-custom" id="editarFilaNome">
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">Modelo</label>
+                            <input type="text" class="form-control form-control-custom" id="editarFilaModelo">
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Cor</label>
                             <input type="text" class="form-control form-control-custom" id="editarFilaCor">
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tipo Lavagem</label>
                             <select class="form-control form-control-custom" id="editarFilaTipoLavagem">
@@ -892,8 +910,6 @@
                                 <option value="higienizacao">Higienização</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Tipo Cliente</label>
                             <select class="form-control form-control-custom" id="editarFilaTipoCliente">
@@ -901,6 +917,8 @@
                                 <option value="mensalista">Mensalista</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Valor (R$)</label>
                             <input type="number" class="form-control form-control-custom" id="editarFilaValor" step="0.01" min="0">
@@ -1006,6 +1024,7 @@
         // Registrar lavagem (adiciona na fila)
         async function registrarLavagem() {
             const placa = document.getElementById('placaLavagem').value.toUpperCase().trim();
+            const nome = document.getElementById('nomeLavagem').value.trim();
             const modelo = document.getElementById('modeloLavagem').value.trim();
             const cor = document.getElementById('corLavagem').value.trim();
             const tipoVeiculo = document.getElementById('tipoVeiculo').value;
@@ -1035,6 +1054,7 @@
                     tipo_cliente: tipoCliente,
                     valor: valor,
                     celular: celular || null,
+                    cliente_nome: nome || null,
                     observacao: observacao || null
                 }]);
             
@@ -1125,7 +1145,7 @@
             if (lavagens.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="empty-state">
+                        <td colspan="11" class="empty-state">
                             <i class="fas fa-car-wash"></i>
                             <p>Nenhuma lavagem encontrada</p>
                         </td>
@@ -1137,6 +1157,7 @@
             tbody.innerHTML = lavagens.map(l => `
                 <tr>
                     <td><span class="placa-badge">${l.placa}</span></td>
+                    <td>${l.cliente_nome || '-'}</td>
                     <td>${l.modelo || '-'}</td>
                     <td>${l.cor || '-'}</td>
                     <td>
@@ -1180,7 +1201,7 @@
             if (filaLavagem.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="10" class="empty-state">
+                        <td colspan="11" class="empty-state">
                             <i class="fas fa-car-wash"></i>
                             <p>Nenhum veículo na fila</p>
                         </td>
@@ -1195,6 +1216,7 @@
                 <tr>
                     <td style="${bgLavado}"><span class="badge ${f.lavado ? 'bg-light text-success' : 'bg-warning text-dark'}">${index + 1}</span></td>
                     <td style="${bgLavado}"><span class="placa-badge">${f.placa}</span></td>
+                    <td style="${bgLavado}">${f.cliente_nome || '-'}</td>
                     <td style="${bgLavado}">${f.modelo || '-'}</td>
                     <td style="${bgLavado}">${f.cor || '-'}</td>
                     <td style="${bgLavado}">
@@ -1272,6 +1294,7 @@
             
             document.getElementById('editarFilaId').value = item.id;
             document.getElementById('editarFilaPlaca').value = item.placa || '';
+            document.getElementById('editarFilaNome').value = item.cliente_nome || '';
             document.getElementById('editarFilaModelo').value = item.modelo || '';
             document.getElementById('editarFilaCor').value = item.cor || '';
             document.getElementById('editarFilaTipoLavagem').value = item.tipo_lavagem || 'simples';
@@ -1288,6 +1311,7 @@
         async function salvarEdicaoFila() {
             const filaId = document.getElementById('editarFilaId').value;
             const placa = document.getElementById('editarFilaPlaca').value.toUpperCase().trim();
+            const nome = document.getElementById('editarFilaNome').value.trim();
             const modelo = document.getElementById('editarFilaModelo').value.trim();
             const cor = document.getElementById('editarFilaCor').value.trim();
             const tipoLavagem = document.getElementById('editarFilaTipoLavagem').value;
@@ -1311,6 +1335,7 @@
                     tipo_cliente: tipoCliente,
                     valor: valor,
                     celular: celular || null,
+                    cliente_nome: nome || null,
                     observacao: observacao || null
                 })
                 .eq('id', filaId);
@@ -1388,6 +1413,7 @@
                     valor: valor,
                     forma_pagamento: formaPagamento,
                     celular: item.celular,
+                    cliente_nome: item.cliente_nome || null,
                     data_lavagem: new Date().toISOString()
                 }]);
             
@@ -1513,6 +1539,7 @@
             
             document.getElementById('editarLavagemId').value = lavagem.id;
             document.getElementById('editarLavagemPlaca').value = lavagem.placa || '';
+            document.getElementById('editarLavagemNome').value = lavagem.cliente_nome || '';
             document.getElementById('editarLavagemModelo').value = lavagem.modelo || '';
             document.getElementById('editarLavagemCor').value = lavagem.cor || '';
             document.getElementById('editarLavagemTipo').value = lavagem.tipo_lavagem || 'simples';
@@ -1528,6 +1555,7 @@
         async function salvarEdicaoLavagem() {
             const lavagemId = document.getElementById('editarLavagemId').value;
             const placa = document.getElementById('editarLavagemPlaca').value.toUpperCase().trim();
+            const nome = document.getElementById('editarLavagemNome').value.trim();
             const modelo = document.getElementById('editarLavagemModelo').value.trim();
             const cor = document.getElementById('editarLavagemCor').value.trim();
             const tipoLavagem = document.getElementById('editarLavagemTipo').value;
@@ -1549,7 +1577,8 @@
                     tipo_lavagem: tipoLavagem,
                     tipo_cliente: tipoCliente,
                     valor: valor,
-                    forma_pagamento: formaPagamento
+                    forma_pagamento: formaPagamento,
+                    cliente_nome: nome || null
                 })
                 .eq('id', lavagemId);
             
