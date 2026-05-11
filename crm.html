@@ -515,13 +515,16 @@
                 });
             });
 
-            // 3) Avulsos (chave: placa)
+            // 3) Avulsos (chave: telefone se houver, senão placa)
             avulsos.forEach(a => {
-                const chave = a.placa;
-                if (!chave) return;
-                const c = getOrCreate(chave.toUpperCase(), 'placa');
+                if (!a.placa) return;
+                const chave = a.telefone || a.placa.toUpperCase();
+                const tipoChave = a.telefone ? 'telefone' : 'placa';
+                const c = getOrCreate(chave, tipoChave);
                 if (!c) return;
-                c.placas.add(chave.toUpperCase());
+                c.placas.add(a.placa.toUpperCase());
+                if (!c.nome && a.cliente_nome) c.nome = a.cliente_nome;
+                if (!c.telefone && a.telefone) c.telefone = a.telefone;
                 c.tipos.add('avulso');
                 if (a.status === 'finalizado' && a.valor) {
                     c.visitas++;
