@@ -81,7 +81,11 @@
             box-shadow: none;
         }
         .form-control-custom::placeholder { color: rgba(255,255,255,0.5); }
-        .form-select-custom option { color: #000; background: #fff; }
+        select.form-select-custom option,
+        select.form-control-custom option {
+            color: #000 !important;
+            background-color: #fff !important;
+        }
         .btn-voltar {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
