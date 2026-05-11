@@ -81,6 +81,7 @@
             box-shadow: none;
         }
         .form-control-custom::placeholder { color: rgba(255,255,255,0.5); }
+        .form-select-custom option { color: #000; background: #fff; }
         .btn-voltar {
             background: rgba(255,255,255,0.2);
             border: 1px solid rgba(255,255,255,0.3);
@@ -191,11 +192,19 @@
                         <option value="ativo">Ativos (últimos 30 dias)</option>
                         <option value="inativo">Inativos (+30 dias)</option>
                         <option value="favorito">Apenas favoritos</option>
+                        <option value="ocultos">Ocultos (excluídos)</option>
                     </select>
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-light w-100" onclick="aplicarFiltros()">
                         <i class="fas fa-filter me-1"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+            <div class="row g-2 mt-2">
+                <div class="col-md-12 text-end">
+                    <button class="btn btn-success" onclick="abrirCampanha()">
+                        <i class="fab fa-whatsapp me-2"></i>Enviar Campanha em Massa
                     </button>
                 </div>
             </div>
@@ -231,6 +240,66 @@
         <div class="text-center text-muted small mt-3">
             <i class="fas fa-info-circle"></i>
             Clientes unificados por telefone ou placa | Apenas leitura — não altera dados originais
+        </div>
+    </div>
+
+    <!-- Modal Campanha em Massa -->
+    <div class="modal fade" id="modalCampanha" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg,#25d366,#128c7e); border:none;">
+                    <h5 class="modal-title"><i class="fab fa-whatsapp me-2"></i>Campanha WhatsApp</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Serão enviadas para os <strong id="campanhaCount">0</strong> clientes filtrados que possuem telefone cadastrado.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem <small class="text-muted">(use <code>{nome}</code> para personalizar)</small></label>
+                        <textarea id="campanhaMsg" rows="6" class="form-control" style="background:#fff;color:#000;" placeholder="Olá {nome}! Temos uma promoção especial de lavagem essa semana. Aproveite!"></textarea>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3"><i class="fas fa-paper-plane me-2"></i>Como enviar:</h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-success h-100">
+                                <div class="card-body">
+                                    <h6 class="text-success"><i class="fab fa-whatsapp me-2"></i>Disparo Semi-Automático</h6>
+                                    <p class="small text-muted">Abre uma aba do WhatsApp Web por cliente, com a mensagem já pronta. Você clica em "Enviar" no WhatsApp.</p>
+                                    <button class="btn btn-success w-100" onclick="dispararSemiAutomatico()">
+                                        <i class="fas fa-rocket me-2"></i>Disparar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-dark border-info h-100">
+                                <div class="card-body">
+                                    <h6 class="text-info"><i class="fas fa-list me-2"></i>Lista de Transmissão</h6>
+                                    <p class="small text-muted">Copia a lista de telefones. Cole no WhatsApp Business para criar uma Lista de Transmissão (até 256 contatos).</p>
+                                    <button class="btn btn-info w-100" onclick="copiarListaTelefones()">
+                                        <i class="fas fa-copy me-2"></i>Copiar Telefones
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="campanhaProgresso" class="mt-3" style="display:none;">
+                        <hr>
+                        <h6><i class="fas fa-tasks me-2"></i>Progresso do Disparo</h6>
+                        <div class="progress mb-2"><div id="campanhaBarra" class="progress-bar bg-success" style="width:0%">0%</div></div>
+                        <p class="small mb-1"><span id="campanhaEnviado">0</span> de <span id="campanhaTotal">0</span> enviados</p>
+                        <p class="small text-muted">Próximo cliente em <span id="campanhaCountdown">0</span>s...</p>
+                        <button class="btn btn-danger btn-sm" onclick="pararDisparo()"><i class="fas fa-stop me-1"></i>Parar</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -391,6 +460,7 @@
                         tags: crm.tags || [],
                         observacao: crm.observacao || '',
                         favorito: crm.favorito || false,
+                        oculto: crm.oculto || false,
                         placas: new Set(),
                         tipos: new Set(),
                         visitas: 0,
@@ -503,6 +573,12 @@
             const dia30 = 30 * 24 * 60 * 60 * 1000;
 
             let lista = todosClientes.filter(c => {
+                // Ocultos: por padrão NÃO mostra; só se filtro for 'ocultos'
+                if (filtroAtv === 'ocultos') {
+                    if (!c.oculto) return false;
+                } else {
+                    if (c.oculto) return false;
+                }
                 // Busca
                 if (busca) {
                     const txt = `${c.nome} ${c.telefone} ${c.placas.join(' ')} ${c.email}`.toLowerCase();
@@ -561,7 +637,11 @@
                     <td>${ultimaFmt}</td>
                     <td>
                         ${c.telefone ? `<button class="btn btn-success btn-sm me-1" onclick="abrirWhatsApp('${c.telefone}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>` : ''}
-                        <button class="btn btn-info btn-sm" onclick="abrirModalCliente(${idxStr})" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-info btn-sm me-1" onclick="abrirModalCliente(${idxStr})" title="Editar"><i class="fas fa-edit"></i></button>
+                        ${c.oculto
+                            ? `<button class="btn btn-warning btn-sm" onclick="restaurarCliente(${idxStr})" title="Restaurar"><i class="fas fa-undo"></i></button>`
+                            : `<button class="btn btn-danger btn-sm" onclick="excluirCliente(${idxStr})" title="Excluir do CRM"><i class="fas fa-trash"></i></button>`
+                        }
                     </td>
                 </tr>`;
             }).join('');
@@ -585,6 +665,28 @@
             atualizarStats();
         }
 
+        async function excluirCliente(idx) {
+            const c = window._listaFiltrada[idx];
+            if (!c) return;
+            const nome = c.nome || c.telefone || c.placas[0] || 'cliente';
+            if (!confirm(`Excluir "${nome}" do CRM?\n\nO cliente apenas será ocultado da lista. Os dados originais (lavagens, mensalistas, estacionamento) NÃO serão apagados.\n\nVocê pode restaurar depois usando o filtro "Ocultos".`)) return;
+            c.oculto = true;
+            await salvarCRM(c);
+            showAlert('Cliente removido do CRM', 'success');
+            renderizar();
+            atualizarStats();
+        }
+
+        async function restaurarCliente(idx) {
+            const c = window._listaFiltrada[idx];
+            if (!c) return;
+            c.oculto = false;
+            await salvarCRM(c);
+            showAlert('Cliente restaurado', 'success');
+            renderizar();
+            atualizarStats();
+        }
+
         async function salvarCRM(c) {
             const user = JSON.parse(localStorage.getItem('currentUser'));
             const k = `${c.tipoChave}:${c.chave}`;
@@ -598,6 +700,7 @@
                 tags: c.tags && c.tags.length > 0 ? c.tags : null,
                 observacao: c.observacao || null,
                 favorito: c.favorito || false,
+                oculto: c.oculto || false,
                 updated_at: new Date().toISOString()
             };
             const existe = crmDados[k];
@@ -647,6 +750,102 @@
             }
 
             new bootstrap.Modal(document.getElementById('modalCliente')).show();
+        }
+
+        // ============================================================
+        // CAMPANHA EM MASSA
+        // ============================================================
+        let _disparoTimer = null;
+        let _disparoIndex = 0;
+        let _disparoLista = [];
+        let _disparoParar = false;
+
+        function abrirCampanha() {
+            const lista = (window._listaFiltrada || []).filter(c => c.telefone);
+            document.getElementById('campanhaCount').textContent = lista.length;
+            document.getElementById('campanhaProgresso').style.display = 'none';
+            new bootstrap.Modal(document.getElementById('modalCampanha')).show();
+        }
+
+        function copiarListaTelefones() {
+            const lista = (window._listaFiltrada || []).filter(c => c.telefone);
+            if (lista.length === 0) { showAlert('Nenhum cliente com telefone na lista filtrada', 'warning'); return; }
+            const tels = lista.map(c => {
+                const t = c.telefone.replace(/\D/g, '');
+                return t.startsWith('55') ? '+' + t : '+55' + t;
+            }).join('\n');
+            navigator.clipboard.writeText(tels).then(() => {
+                showAlert(`${lista.length} telefones copiados! Cole no WhatsApp Business em "Nova Lista de Transmissão".`);
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = tels; document.body.appendChild(ta); ta.select();
+                document.execCommand('copy'); document.body.removeChild(ta);
+                showAlert(`${lista.length} telefones copiados!`);
+            });
+        }
+
+        function dispararSemiAutomatico() {
+            const msg = document.getElementById('campanhaMsg').value.trim();
+            if (!msg) { showAlert('Digite uma mensagem', 'warning'); return; }
+
+            _disparoLista = (window._listaFiltrada || []).filter(c => c.telefone);
+            if (_disparoLista.length === 0) { showAlert('Nenhum cliente com telefone', 'warning'); return; }
+
+            if (!confirm(`Disparar para ${_disparoLista.length} clientes? Uma aba do WhatsApp será aberta por cliente a cada 5 segundos. Clique em "Enviar" em cada uma.`)) return;
+
+            _disparoIndex = 0;
+            _disparoParar = false;
+            document.getElementById('campanhaProgresso').style.display = 'block';
+            document.getElementById('campanhaTotal').textContent = _disparoLista.length;
+            document.getElementById('campanhaEnviado').textContent = 0;
+            document.getElementById('campanhaBarra').style.width = '0%';
+            document.getElementById('campanhaBarra').textContent = '0%';
+
+            processarProximoDisparo(msg);
+        }
+
+        function processarProximoDisparo(msg) {
+            if (_disparoParar || _disparoIndex >= _disparoLista.length) {
+                showAlert(`Disparo finalizado! ${_disparoIndex} cliente(s) processado(s).`);
+                document.getElementById('campanhaCountdown').textContent = '0';
+                return;
+            }
+
+            const c = _disparoLista[_disparoIndex];
+            const tel = c.telefone.replace(/\D/g, '');
+            const numero = tel.startsWith('55') ? tel : '55' + tel;
+            const nome = c.nome || 'cliente';
+            const msgPersonalizada = msg.replace(/\{nome\}/g, nome);
+            const url = `https://wa.me/${numero}?text=${encodeURIComponent(msgPersonalizada)}`;
+
+            window.open(url, '_blank');
+            _disparoIndex++;
+
+            const enviadoEl = document.getElementById('campanhaEnviado');
+            const barraEl = document.getElementById('campanhaBarra');
+            enviadoEl.textContent = _disparoIndex;
+            const pct = Math.round((_disparoIndex / _disparoLista.length) * 100);
+            barraEl.style.width = pct + '%';
+            barraEl.textContent = pct + '%';
+
+            // Countdown 5 segundos antes do próximo
+            let restantes = 5;
+            document.getElementById('campanhaCountdown').textContent = restantes;
+            _disparoTimer = setInterval(() => {
+                restantes--;
+                document.getElementById('campanhaCountdown').textContent = restantes;
+                if (restantes <= 0) {
+                    clearInterval(_disparoTimer);
+                    processarProximoDisparo(msg);
+                }
+            }, 1000);
+        }
+
+        function pararDisparo() {
+            _disparoParar = true;
+            if (_disparoTimer) clearInterval(_disparoTimer);
+            showAlert('Disparo interrompido', 'warning');
         }
 
         async function salvarCliente() {
