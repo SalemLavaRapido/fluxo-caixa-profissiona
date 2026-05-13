@@ -25,6 +25,11 @@
             color: #fff;
         }
         
+        /* Container mais largo no PC (aproveita melhor monitores grandes) */
+        @media (min-width: 1200px) {
+            .container { max-width: 1600px !important; }
+        }
+
         .navbar-custom {
             background: var(--lavagem-gradient);
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
