@@ -671,6 +671,18 @@
                             </button>
                         </div>
 
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                    <input type="text" class="form-control" id="buscarPlacaEntrada" placeholder="Buscar por placa, descrição ou categoria..." oninput="filtrarEntradasPorPlaca()">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="limparBuscaEntrada()" title="Limpar">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="table-custom table-responsive">
                             <table class="table table-hover mb-0">
                                 <thead>
