@@ -544,7 +544,7 @@
                 </h4>
                 <div class="d-flex gap-2">
                     <input type="text" class="form-control form-control-custom" id="buscaComprovante" 
-                           placeholder="🔍 Buscar Nº Comprovante" style="width: 200px;" onkeyup="buscarPorComprovante()">
+                           placeholder="🔍 Buscar Nº Comprovante ou Placa" style="width: 260px;" onkeyup="buscarPorComprovante()">
                 </div>
             </div>
             
@@ -1012,13 +1012,20 @@
                 return;
             }
             
-            // Filtrar por busca de comprovante
+            // Filtrar por busca de comprovante OU placa
             const buscaComprovante = document.getElementById('buscaComprovante')?.value?.trim() || '';
             let veiculosFiltrados = veiculosPatio;
             
             if (buscaComprovante) {
+                const termo = buscaComprovante.toLowerCase();
                 const numeroBusca = parseInt(buscaComprovante, 10);
-                veiculosFiltrados = veiculosPatio.filter(v => v.numero_comprovante === numeroBusca);
+                const ehNumero = !isNaN(numeroBusca) && /^\d+$/.test(buscaComprovante);
+                veiculosFiltrados = veiculosPatio.filter(v => {
+                    const placa = (v.placa || '').toLowerCase();
+                    const matchPlaca = placa.includes(termo);
+                    const matchNumero = ehNumero && v.numero_comprovante === numeroBusca;
+                    return matchPlaca || matchNumero;
+                });
             }
             
             if (veiculosFiltrados.length === 0) {
